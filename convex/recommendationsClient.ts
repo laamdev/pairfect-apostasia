@@ -27,10 +27,14 @@ export const getLatestForRestaurant = query({
 
     const items = await Promise.all(
       rec.items.map(async (it) => {
-        const menuItem = await ctx.db.get("menuItems", it.menuItemId);
-        if (!menuItem) return null;
+        // Prefer denormalized name; fall back to live read for older records
+        const name =
+          it.menuItemName ??
+          (await ctx.db.get(it.menuItemId))?.name ??
+          null;
+        if (!name) return null;
         return {
-          name: menuItem.name,
+          name,
           matchPercentage: it.matchPercentage,
           reason: it.reason,
         };

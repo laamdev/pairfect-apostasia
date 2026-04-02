@@ -66,7 +66,17 @@ export const upsertGlobalProfile = mutation({
     };
 
     if (existing) {
-      await ctx.db.patch(existing._id, base);
+      const changed =
+        existing.spiceLevel !== base.spiceLevel ||
+        existing.dietPreference !== base.dietPreference ||
+        existing.alcoholTolerance !== base.alcoholTolerance ||
+        existing.sweetTooth !== base.sweetTooth ||
+        existing.displayName !== base.displayName ||
+        JSON.stringify(existing.tasteProfile) !== JSON.stringify(base.tasteProfile) ||
+        JSON.stringify(existing.allergenIdsToAvoid) !== JSON.stringify(base.allergenIdsToAvoid);
+      if (changed) {
+        await ctx.db.patch(existing._id, base);
+      }
       return existing._id;
     }
 
@@ -153,7 +163,16 @@ export const upsertRestaurantProfile = mutation({
     };
 
     if (existing) {
-      await ctx.db.patch(existing._id, base);
+      const changed =
+        existing.spiceLevel !== base.spiceLevel ||
+        existing.dietPreference !== base.dietPreference ||
+        existing.alcoholTolerance !== base.alcoholTolerance ||
+        existing.sweetTooth !== base.sweetTooth ||
+        JSON.stringify(existing.tasteProfile) !== JSON.stringify(base.tasteProfile) ||
+        JSON.stringify(existing.allergenIdsToAvoid) !== JSON.stringify(base.allergenIdsToAvoid);
+      if (changed) {
+        await ctx.db.patch(existing._id, base);
+      }
       return existing._id;
     }
 

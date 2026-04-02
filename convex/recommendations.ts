@@ -119,7 +119,7 @@ Return exactly 3 menu item recommendations (from the list above) that best match
     }
 
     const nameToItem = new Map(menuItems.map((m: Doc<'menuItems'>) => [m.name.trim().toLowerCase(), m]));
-    const items: Array<{ menuItemId: Id<'menuItems'>; matchPercentage: number; reason?: string }> = [];
+    const items: Array<{ menuItemId: Id<'menuItems'>; menuItemName?: string; matchPercentage: number; reason?: string }> = [];
 
     for (const rec of recommendations.slice(0, 3)) {
       const name = (rec.menuItemName ?? '').trim();
@@ -132,6 +132,7 @@ Return exactly 3 menu item recommendations (from the list above) that best match
       if (menuItem) {
         items.push({
           menuItemId: menuItem._id,
+          menuItemName: menuItem.name,
           matchPercentage: Math.min(100, Math.max(0, Number(rec.matchPercentage) || 0)),
           reason: rec.reason,
         });

@@ -14,6 +14,7 @@ export const insertRecommendation = internalMutation({
     items: v.array(
       v.object({
         menuItemId: v.id("menuItems"),
+        menuItemName: v.optional(v.string()),
         matchPercentage: v.number(),
         reason: v.optional(v.string()),
       }),

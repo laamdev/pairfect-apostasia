@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { internalMutation } from "./_generated/server";
+import { internalMutation, query } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 
 export const getOrCreateUser = internalMutation({
@@ -19,5 +19,27 @@ export const getOrCreateUser = internalMutation({
       email: args.email,
       name: args.name,
     });
+  },
+});
+
+/** Get the current user's info (role, email, name). */
+export const currentUser = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_subject", (q) => q.eq("subject", identity.subject))
+      .unique();
+    if (!user) return null;
+
+    return {
+      _id: user._id,
+      email: user.email,
+      name: user.name,
+      role: user.role ?? "client",
+    };
   },
 });

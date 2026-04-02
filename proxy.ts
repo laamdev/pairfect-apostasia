@@ -2,10 +2,6 @@ import { authkitMiddleware } from '@workos-inc/authkit-nextjs';
 
 export const proxy = authkitMiddleware({
   eagerAuth: true,
-  middlewareAuth: {
-    enabled: true,
-    unauthenticatedPaths: ['/sign-in', '/sign-up'],
-  },
   redirectUri:
     process.env.VERCEL_ENV === 'preview'
       ? `https://${process.env.VERCEL_BRANCH_URL}/callback`
