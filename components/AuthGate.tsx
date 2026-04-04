@@ -33,32 +33,34 @@ function PairfectLanding() {
   }, []);
 
   return (
-    <main className="flex-1 flex flex-col md:flex-row">
-      {/* Left half */}
-      <div className="flex-1 flex flex-col justify-center px-6 py-8 sm:p-8 gap-8 sm:gap-10 max-w-md">
-        <div className="flex flex-col gap-3">
-          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight">Pairfect</h1>
-          <p className="text-muted-foreground text-sm sm:text-base">Your perfect pairing, at every restaurant</p>
-        </div>
+    <main className="flex-1 flex flex-col md:flex-row min-h-0">
+      {/* Left half — form */}
+      <div className="flex-1 flex items-center justify-center px-6 py-12 sm:p-12">
+        <div className="flex flex-col gap-8 sm:gap-10 w-full max-w-sm">
+          <div className="flex flex-col gap-3">
+            <h1 className="text-3xl sm:text-5xl font-bold tracking-tight">Pairfect</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">Your perfect pairing, at every restaurant</p>
+          </div>
 
-        <div className="flex flex-col gap-3 w-full">
-          <a
-            href="/sign-in"
-            className="block text-center bg-accent text-background px-5 py-2.5 sm:px-6 sm:py-3 rounded-lg font-medium text-base sm:text-lg hover:bg-accent-hover transition-colors"
-          >
-            Sign in
-          </a>
-          <a
-            href="/sign-up"
-            className="block text-center border border-accent text-accent px-5 py-2.5 sm:px-6 sm:py-3 rounded-lg font-medium text-base sm:text-lg hover:bg-surface transition-colors"
-          >
-            Create account
-          </a>
+          <div className="flex flex-col gap-3 w-full">
+            <a
+              href="/sign-in"
+              className="block text-center bg-accent text-background px-5 py-2.5 sm:px-6 sm:py-3 rounded-lg font-medium text-base sm:text-lg hover:bg-accent-hover transition-colors"
+            >
+              Sign in
+            </a>
+            <a
+              href="/sign-up"
+              className="block text-center border border-accent text-accent px-5 py-2.5 sm:px-6 sm:py-3 rounded-lg font-medium text-base sm:text-lg hover:bg-surface transition-colors"
+            >
+              Create account
+            </a>
+          </div>
         </div>
       </div>
 
-      {/* Right half */}
-      <div className="flex-1 relative hidden md:block bg-surface overflow-hidden">
+      {/* Right half — image */}
+      <div className="hidden md:block flex-1 relative bg-surface overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={imageIndex}
