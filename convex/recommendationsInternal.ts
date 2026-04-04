@@ -15,6 +15,7 @@ export const insertRecommendation = internalMutation({
       v.object({
         menuItemId: v.id("menuItems"),
         menuItemName: v.optional(v.string()),
+        pairingName: v.optional(v.string()),
         matchPercentage: v.number(),
         reason: v.optional(v.string()),
       }),
@@ -31,6 +32,17 @@ export const insertRecommendation = internalMutation({
     ),
   },
   handler: async (ctx, args) => {
+    // One recommendation per user per restaurant — replace existing
+    const existing = await ctx.db
+      .query("recommendations")
+      .withIndex("by_userId_and_restaurantId", (q) =>
+        q.eq("userId", args.userId).eq("restaurantId", args.restaurantId),
+      )
+      .unique();
+    if (existing) {
+      await ctx.db.delete(existing._id);
+    }
+
     await ctx.db.insert("recommendations", {
       userId: args.userId,
       restaurantId: args.restaurantId,

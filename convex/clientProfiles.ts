@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
+import { getCurrentUser, requireUser } from "./authHelpers";
 import {
   alcoholToleranceValidator,
   dietPreferenceValidator,
@@ -12,13 +12,7 @@ import {
 export const getGlobalProfile = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return null;
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_subject", (q) => q.eq("subject", identity.subject))
-      .unique();
+    const user = await getCurrentUser(ctx);
     if (!user) return null;
 
     const profile = await ctx.db
@@ -40,14 +34,8 @@ export const upsertGlobalProfile = mutation({
     displayName: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<Id<"clientProfiles">> => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Sign in required");
-
-    const userId: Id<"users"> = await ctx.runMutation(internal.users.getOrCreateUser, {
-      subject: identity.subject,
-      email: identity.email ?? undefined,
-      name: identity.name ?? undefined,
-    });
+    const user = await requireUser(ctx);
+    const userId = user._id;
 
     const existing: Doc<"clientProfiles"> | null = await ctx.db
       .query("clientProfiles")
@@ -89,13 +77,7 @@ export const getRestaurantProfile = query({
     restaurantId: v.id("restaurants"),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return { restaurantProfile: null, globalProfile: null };
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_subject", (q) => q.eq("subject", identity.subject))
-      .unique();
+    const user = await getCurrentUser(ctx);
     if (!user) return { restaurantProfile: null, globalProfile: null };
 
     const [restaurantProfile, globalProfile] = await Promise.all([
@@ -127,14 +109,8 @@ export const upsertRestaurantProfile = mutation({
     sweetTooth: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<Id<"restaurantClientProfiles"> | null> => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Sign in required");
-
-    const userId: Id<"users"> = await ctx.runMutation(internal.users.getOrCreateUser, {
-      subject: identity.subject,
-      email: identity.email ?? undefined,
-      name: identity.name ?? undefined,
-    });
+    const user = await requireUser(ctx);
+    const userId = user._id;
 
     const existing: Doc<"restaurantClientProfiles"> | null = await ctx.db
       .query("restaurantClientProfiles")

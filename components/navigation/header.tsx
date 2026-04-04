@@ -4,47 +4,83 @@ import Link from 'next/link';
 import { useAuth } from '@workos-inc/authkit-nextjs/components';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
+import { useEnsureUser } from '../../hooks/useEnsureUser';
+import { User, Settings, LogOut } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTrigger,
+} from '../ui/popover';
 
 export const Header = () => {
   const { user, signOut } = useAuth();
   const currentUser = useQuery(api.users.currentUser);
+  useEnsureUser();
 
-  const isStaff = currentUser?.role === 'staff';
+  const isStaffOrAdmin = currentUser?.role === 'admin' || currentUser?.isRestaurantMember;
 
   if (!user) return null;
 
+  const initials = (currentUser?.name ?? user.email ?? '')
+    .split(' ')
+    .map((s) => s[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
   return (
     <header className="sticky top-0 z-10 bg-surface p-4 border-b border-border flex flex-row justify-between items-center">
-      <div className="flex items-center gap-4">
-        <Link href="/" className="font-semibold text-accent">
-          Pairfect
-        </Link>
-        <nav className="flex items-center gap-3 text-sm">
-          <Link href="/preferences" className="text-muted hover:text-foreground transition-colors">
-            My Preferences
-          </Link>
-          {isStaff && (
-            <Link href="/admin" className="text-accent hover:text-accent-hover font-medium transition-colors">
-              Admin
+      <Link href="/" className="font-heading text-lg font-semibold text-accent">
+        Pairfect
+      </Link>
+
+      <Popover>
+        <PopoverTrigger className="cursor-pointer rounded-full outline-none focus-visible:ring-2 focus-visible:ring-accent">
+          <Avatar>
+            {currentUser?.avatarUrl && <AvatarImage src={currentUser.avatarUrl} alt={currentUser.name ?? 'Profile'} />}
+            <AvatarFallback>{initials || '?'}</AvatarFallback>
+          </Avatar>
+        </PopoverTrigger>
+        <PopoverContent align="end" sideOffset={8} className="w-56">
+          <PopoverHeader>
+            <p className="font-medium text-foreground truncate">
+              {currentUser?.name ?? 'User'}
+            </p>
+            <p className="text-xs text-muted-foreground truncate">
+              {user.email}
+            </p>
+          </PopoverHeader>
+          <div className="h-px bg-border" />
+          <nav className="flex flex-col gap-0.5">
+            <Link
+              href="/profile"
+              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            >
+              <User className="size-4" />
+              My Profile
             </Link>
-          )}
-        </nav>
-      </div>
-      <UserMenu email={user.email ?? ''} onSignOut={signOut} />
+            {isStaffOrAdmin && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              >
+                <Settings className="size-4" />
+                Dashboard
+              </Link>
+            )}
+          </nav>
+          <div className="h-px bg-border" />
+          <button
+            onClick={() => signOut()}
+            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+          >
+            <LogOut className="size-4" />
+            Sign out
+          </button>
+        </PopoverContent>
+      </Popover>
     </header>
   );
 };
-
-function UserMenu({ email, onSignOut }: { email: string; onSignOut: () => void }) {
-  return (
-    <div className="flex items-center gap-3">
-      <span className="text-sm text-muted">{email}</span>
-      <button
-        onClick={onSignOut}
-        className="text-sm px-3 py-1 rounded-md border border-border text-muted hover:text-foreground hover:border-foreground transition-colors"
-      >
-        Sign out
-      </button>
-    </div>
-  );
-}

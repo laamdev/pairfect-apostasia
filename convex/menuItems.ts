@@ -12,11 +12,49 @@ import {
 export const listByRestaurant = query({
   args: { restaurantId: v.id("restaurants") },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const items = await ctx.db
       .query("menuItems")
       .withIndex("by_restaurantId", (q) => q.eq("restaurantId", args.restaurantId))
       .order("asc")
       .take(200);
+    return Promise.all(
+      items.map(async (item) => ({
+        ...item,
+        imageUrl: item.imageStorageId
+          ? await ctx.storage.getUrl(item.imageStorageId)
+          : null,
+      })),
+    );
+  },
+});
+
+/** List only available menu items for a restaurant (public-facing). */
+export const listAvailableByRestaurant = query({
+  args: { restaurantId: v.id("restaurants") },
+  handler: async (ctx, args) => {
+    const items = await ctx.db
+      .query("menuItems")
+      .withIndex("by_restaurantId", (q) => q.eq("restaurantId", args.restaurantId))
+      .order("asc")
+      .take(200);
+    const available = items.filter((item) => item.isAvailable !== false);
+    return Promise.all(
+      available.map(async (item) => ({
+        ...item,
+        imageUrl: item.imageStorageId
+          ? await ctx.storage.getUrl(item.imageStorageId)
+          : null,
+      })),
+    );
+  },
+});
+
+/** Generate an upload URL for a menu item image. */
+export const generateUploadUrl = mutation({
+  args: { restaurantId: v.id("restaurants") },
+  handler: async (ctx, args) => {
+    await requireRestaurantMember(ctx, args.restaurantId, ["owner"]);
+    return await ctx.storage.generateUploadUrl();
   },
 });
 
@@ -35,16 +73,20 @@ export const createMenuItem = mutation({
     description: v.string(),
     category: v.string(),
     allergenIds: v.array(v.id("allergens")),
+    ingredients: v.optional(v.array(v.string())),
+    pairingNotes: v.optional(v.array(v.string())),
     dietTags: v.optional(v.array(dietPreferenceValidator)),
-    containsAlcohol: v.boolean(),
     alcoholLevel: v.optional(alcoholToleranceValidator),
     tasteProfile: v.optional(v.array(tasteProfileValidator)),
     spiceLevel: v.optional(spiceLevelValidator),
     price: v.optional(v.number()),
     sortOrder: v.optional(v.number()),
+    isAvailable: v.optional(v.boolean()),
+    isSpecial: v.optional(v.boolean()),
+    imageStorageId: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args): Promise<Id<"menuItems">> => {
-    await requireRestaurantMember(ctx, args.restaurantId);
+    await requireRestaurantMember(ctx, args.restaurantId, ["owner"]);
 
     return await ctx.db.insert("menuItems", {
       restaurantId: args.restaurantId,
@@ -52,13 +94,17 @@ export const createMenuItem = mutation({
       description: args.description,
       category: args.category,
       allergenIds: args.allergenIds,
+      ingredients: args.ingredients,
+      pairingNotes: args.pairingNotes,
       dietTags: args.dietTags,
-      containsAlcohol: args.containsAlcohol,
       alcoholLevel: args.alcoholLevel,
       tasteProfile: args.tasteProfile,
       spiceLevel: args.spiceLevel,
       price: args.price,
       sortOrder: args.sortOrder,
+      isAvailable: args.isAvailable ?? true,
+      isSpecial: args.isSpecial ?? false,
+      imageStorageId: args.imageStorageId,
     });
   },
 });
@@ -71,19 +117,23 @@ export const updateMenuItem = mutation({
     description: v.optional(v.string()),
     category: v.optional(v.string()),
     allergenIds: v.optional(v.array(v.id("allergens"))),
+    ingredients: v.optional(v.array(v.string())),
+    pairingNotes: v.optional(v.array(v.string())),
     dietTags: v.optional(v.array(dietPreferenceValidator)),
-    containsAlcohol: v.optional(v.boolean()),
     alcoholLevel: v.optional(alcoholToleranceValidator),
     tasteProfile: v.optional(v.array(tasteProfileValidator)),
     spiceLevel: v.optional(spiceLevelValidator),
     price: v.optional(v.number()),
     sortOrder: v.optional(v.number()),
+    isAvailable: v.optional(v.boolean()),
+    isSpecial: v.optional(v.boolean()),
+    imageStorageId: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
     const item = await ctx.db.get(args.menuItemId);
     if (!item) throw new Error("Menu item not found");
 
-    await requireRestaurantMember(ctx, item.restaurantId);
+    await requireRestaurantMember(ctx, item.restaurantId, ["owner"]);
 
     const { menuItemId, ...updates } = args;
     // Filter out undefined values
@@ -105,7 +155,7 @@ export const deleteMenuItem = mutation({
     const item = await ctx.db.get(args.menuItemId);
     if (!item) throw new Error("Menu item not found");
 
-    await requireRestaurantMember(ctx, item.restaurantId);
+    await requireRestaurantMember(ctx, item.restaurantId, ["owner"]);
 
     await ctx.db.delete(args.menuItemId);
   },

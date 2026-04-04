@@ -1,36 +1,55 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useMutation, useQuery } from 'convex/react';
-import { api } from '../../../../../convex/_generated/api';
-import type { Id } from '../../../../../convex/_generated/dataModel';
+import { useQuery } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import type { Id } from '@/convex/_generated/dataModel';
 import Link from 'next/link';
-import { useState } from 'react';
+import { RestaurantInfoForm } from '@/components/restaurant-settings/RestaurantInfoForm';
+import { MemberRow } from '@/components/restaurant-settings/MemberRow';
+import { PendingInvitationRow } from '@/components/restaurant-settings/PendingInvitationRow';
+import { AddMemberForm } from '@/components/restaurant-settings/AddMemberForm';
+import { PageWrapper } from '@/components/PageWrapper';
+import { ArrowLeft } from 'lucide-react';
+import { CardListSkeleton } from '@/components/skeletons';
 
 export default function RestaurantSettingsPage() {
   const params = useParams();
   const restaurantId = params.id as Id<'restaurants'>;
   const restaurants = useQuery(api.restaurants.listMyRestaurants);
   const members = useQuery(api.restaurantMembers.listMembers, { restaurantId });
+  const pendingInvitations = useQuery(api.restaurantMembers.listPendingInvitations, { restaurantId });
   const restaurant = restaurants?.find((r) => r._id === restaurantId);
 
-  if (restaurants === undefined) return <main className="p-8 max-w-3xl mx-auto"><p className="text-muted">Loading...</p></main>;
+  if (restaurants === undefined)
+    return (
+      <PageWrapper>
+        <CardListSkeleton count={3} />
+      </PageWrapper>
+    );
 
   if (!restaurant) {
     return (
-      <main className="p-8 max-w-3xl mx-auto">
+      <PageWrapper>
         <p>Restaurant not found or you don't have access.</p>
-        <Link href="/admin" className="mt-4 inline-block text-sm text-accent">Back to dashboard</Link>
-      </main>
+        <Link href="/admin" className="mt-4 inline-flex items-center gap-1 text-sm text-accent">
+          <ArrowLeft className="size-3.5" />
+          Back to dashboard
+        </Link>
+      </PageWrapper>
     );
   }
 
-  const canManage = restaurant.role === 'owner' || restaurant.role === 'admin';
+  const canManage = restaurant.role === 'owner';
 
   return (
-    <main className="p-8 max-w-3xl mx-auto flex flex-col gap-8">
+    <PageWrapper>
       <div>
-        <Link href={`/admin/restaurant/${restaurantId}`} className="text-sm text-muted hover:text-foreground transition-colors">
+        <Link
+          href={`/admin/restaurant/${restaurantId}`}
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
+        >
+          <ArrowLeft className="size-3.5" />
           Back to {restaurant.name}
         </Link>
       </div>
@@ -38,105 +57,34 @@ export default function RestaurantSettingsPage() {
       {canManage && <RestaurantInfoForm restaurantId={restaurantId} restaurant={restaurant} />}
       <section>
         <h2 className="text-lg font-medium mb-4">Team</h2>
-        {members === undefined && <p className="text-muted text-sm">Loading members...</p>}
+        {members === undefined && <CardListSkeleton count={2} />}
         {members && members.length > 0 && (
           <ul className="flex flex-col gap-2 mb-4">
-            {members.map((m: { _id: Id<'restaurantMembers'>; userId: Id<'users'>; role: string; email: string | null; name: string | null }) => (
-              <MemberRow key={m._id} member={m} canManage={canManage} />
-            ))}
+            {members.map(
+              (m: {
+                _id: Id<'restaurantMembers'>;
+                userId: Id<'users'>;
+                role: string;
+                email: string | null;
+                name: string | null;
+              }) => (
+                <MemberRow key={m._id} member={m} canManage={canManage} />
+              ),
+            )}
           </ul>
+        )}
+        {canManage && pendingInvitations && pendingInvitations.length > 0 && (
+          <>
+            <h3 className="text-sm font-medium text-muted-foreground mt-2 mb-2">Pending invitations</h3>
+            <ul className="flex flex-col gap-2 mb-4">
+              {pendingInvitations.map((inv) => (
+                <PendingInvitationRow key={inv._id} invitation={inv} />
+              ))}
+            </ul>
+          </>
         )}
         {canManage && <AddMemberForm restaurantId={restaurantId} />}
       </section>
-    </main>
-  );
-}
-
-function RestaurantInfoForm({ restaurantId, restaurant }: { restaurantId: Id<'restaurants'>; restaurant: { name: string; description?: string } }) {
-  const [name, setName] = useState(restaurant.name);
-  const [description, setDescription] = useState(restaurant.description ?? '');
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const updateRestaurant = useMutation(api.restaurants.updateRestaurant);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true); setMessage(null);
-    try { await updateRestaurant({ restaurantId, name: name.trim(), description: description.trim() || undefined }); setMessage('Saved.'); }
-    catch (err) { setMessage(err instanceof Error ? err.message : 'Failed to save'); }
-    finally { setSaving(false); }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <h2 className="text-lg font-medium">Info</h2>
-      <div>
-        <label className="block text-sm font-medium mb-1">Name</label>
-        <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full border border-border rounded px-3 py-2 bg-surface text-foreground focus:border-accent outline-none" required />
-      </div>
-      <div>
-        <label className="block text-sm font-medium mb-1">Description</label>
-        <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="w-full border border-border rounded px-3 py-2 bg-surface text-foreground focus:border-accent outline-none" rows={3} />
-      </div>
-      <div className="flex items-center gap-3">
-        <button type="submit" disabled={saving || !name.trim()} className="bg-accent text-background px-4 py-2 rounded-md text-sm disabled:opacity-50 hover:bg-accent-hover transition-colors">
-          {saving ? 'Saving...' : 'Save'}
-        </button>
-        {message && <span className="text-sm text-muted">{message}</span>}
-      </div>
-    </form>
-  );
-}
-
-function MemberRow({ member, canManage }: { member: { _id: Id<'restaurantMembers'>; role: string; email: string | null; name: string | null }; canManage: boolean }) {
-  const removeMember = useMutation(api.restaurantMembers.removeMember);
-  const [removing, setRemoving] = useState(false);
-
-  return (
-    <li className="flex items-center justify-between border border-border rounded-lg p-3 bg-surface">
-      <div>
-        <span className="text-sm font-medium">{member.email ?? member.name ?? 'Unknown'}</span>
-        <span className="ml-2 text-xs bg-surface-hover px-2 py-0.5 rounded text-muted">{member.role}</span>
-      </div>
-      {canManage && member.role !== 'owner' && (
-        <button type="button" disabled={removing} onClick={async () => { if (!confirm('Remove this member?')) return; setRemoving(true); await removeMember({ membershipId: member._id }); }} className="text-xs text-red-400 hover:text-red-300 disabled:opacity-50">
-          Remove
-        </button>
-      )}
-    </li>
-  );
-}
-
-function AddMemberForm({ restaurantId }: { restaurantId: Id<'restaurants'> }) {
-  const [email, setEmail] = useState('');
-  const [role, setRole] = useState<'admin' | 'editor'>('editor');
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const addMember = useMutation(api.restaurantMembers.addMember);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim()) return;
-    setSaving(true); setMessage(null);
-    try { await addMember({ restaurantId, email: email.trim(), role }); setEmail(''); setMessage('Member added.'); }
-    catch (err) { setMessage(err instanceof Error ? err.message : 'Failed to add member'); }
-    finally { setSaving(false); }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-2">
-      <div>
-        <label className="block text-sm font-medium mb-1">Add member (email)</label>
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="user@email.com" className="border border-border rounded px-3 py-2 bg-surface text-foreground text-sm focus:border-accent outline-none" required />
-      </div>
-      <select value={role} onChange={(e) => setRole(e.target.value as 'admin' | 'editor')} className="border border-border rounded px-3 py-2 bg-surface text-foreground text-sm">
-        <option value="editor">Editor</option>
-        <option value="admin">Admin</option>
-      </select>
-      <button type="submit" disabled={saving} className="bg-accent text-background px-4 py-2 rounded-md text-sm disabled:opacity-50 hover:bg-accent-hover transition-colors">
-        {saving ? 'Adding...' : 'Add'}
-      </button>
-      {message && <span className="text-sm text-muted">{message}</span>}
-    </form>
+    </PageWrapper>
   );
 }

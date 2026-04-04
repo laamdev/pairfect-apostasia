@@ -2,9 +2,7 @@ import { internalMutation } from "../_generated/server";
 
 /**
  * EU 14 allergens of mandatory declaration (Regulation (EU) No 1169/2011).
- * Names and descriptions aligned with official EU / Spanish sources.
- * @see https://www.eufic.org/es/vida-sana/articulo/lista-de-los-14-alergenos-alimentarios-mas-comunes
- * @see https://mae-innovation.com/es/los-14-alergenos-de-declaracion-obligatoria-en-europa/
+ * @see https://www.eufic.org/en/healthy-eating/article/food-allergens
  */
 const EU_14_ALLERGENS: Array<{
   slug: string;
@@ -14,89 +12,91 @@ const EU_14_ALLERGENS: Array<{
 }> = [
   {
     slug: "cereals_gluten",
-    name: "Cereales que contienen gluten",
+    name: "Gluten",
     description:
-      "Trigo, centeno, cebada, avena, espelta, kamut, triticale y sus derivados.",
+      "Wheat, rye, barley, oats, spelt, kamut, triticale and their derivatives.",
     sortOrder: 1,
   },
   {
     slug: "crustaceans",
-    name: "Crustáceos",
-    description: "Cangrejos, langostas, gambas, langostinos, cigalas y productos a base de crustáceos.",
+    name: "Crustaceans",
+    description:
+      "Crabs, lobsters, shrimp, prawns, crayfish and crustacean-based products.",
     sortOrder: 2,
   },
   {
     slug: "eggs",
-    name: "Huevos",
-    description: "Huevos y productos a base de huevo.",
+    name: "Eggs",
+    description: "Eggs and egg-based products.",
     sortOrder: 3,
   },
   {
     slug: "fish",
-    name: "Pescado",
-    description: "Pescado y productos a base de pescado.",
+    name: "Fish",
+    description: "Fish and fish-based products.",
     sortOrder: 4,
   },
   {
     slug: "peanuts",
-    name: "Cacahuetes",
-    description: "Cacahuetes y productos a base de cacahuetes.",
+    name: "Peanuts",
+    description: "Peanuts and peanut-based products.",
     sortOrder: 5,
   },
   {
     slug: "soybeans",
-    name: "Soja",
-    description: "Soja y productos a base de soja.",
+    name: "Soybeans",
+    description: "Soybeans and soybean-based products.",
     sortOrder: 6,
   },
   {
     slug: "milk",
-    name: "Leche",
-    description: "Leche y sus derivados (incluida la lactosa).",
+    name: "Milk",
+    description: "Milk and dairy products (including lactose).",
     sortOrder: 7,
   },
   {
     slug: "nuts",
-    name: "Frutos de cáscara",
+    name: "Tree nuts",
     description:
-      "Almendras, avellanas, nueces, anacardos, pacanas, nueces de Brasil, pistachos, nueces de macadamia o Queensland y productos derivados.",
+      "Almonds, hazelnuts, walnuts, cashews, pecans, Brazil nuts, pistachios, macadamia nuts and their derivatives.",
     sortOrder: 8,
   },
   {
     slug: "celery",
-    name: "Apio",
-    description: "Apio y productos derivados (tallo, hojas, semillas, raíces).",
+    name: "Celery",
+    description: "Celery and celery-based products (stalks, leaves, seeds, roots).",
     sortOrder: 9,
   },
   {
     slug: "mustard",
-    name: "Mostaza",
-    description: "Mostaza y productos derivados (semillas, polvo, líquida).",
+    name: "Mustard",
+    description: "Mustard and mustard-based products (seeds, powder, liquid).",
     sortOrder: 10,
   },
   {
     slug: "sesame_seeds",
-    name: "Semillas de sésamo",
-    description: "Granos o semillas de sésamo y productos a base de sésamo.",
+    name: "Sesame",
+    description: "Sesame seeds and sesame-based products.",
     sortOrder: 11,
   },
   {
     slug: "sulphur_dioxide_sulphites",
-    name: "Dióxido de azufre y sulfitos",
+    name: "Sulphites",
     description:
-      "En concentraciones superiores a 10 mg/kg o 10 mg/l expresado como SO₂.",
+      "Sulphur dioxide and sulphites at concentrations above 10 mg/kg or 10 mg/l expressed as SO₂.",
     sortOrder: 12,
   },
   {
     slug: "lupin",
-    name: "Altramuces",
-    description: "Altramuces y productos a base de altramuces.",
+    name: "Lupin",
+    description: "Lupin and lupin-based products.",
     sortOrder: 13,
   },
   {
     slug: "molluscs",
-    name: "Moluscos",
-    description: "Mejillones, almejas, ostras, calamar, pulpo, caracoles y productos a base de moluscos.",
+    name: "Molluscs",
+    description:
+      "Mussels, clams, oysters, squid, octopus, snails and mollusc-based products.",
     sortOrder: 14,
   },
 ];
@@ -109,7 +109,14 @@ export const seedAllergens = internalMutation({
         .query("allergens")
         .withIndex("by_slug", (q) => q.eq("slug", row.slug))
         .unique();
-      if (existing) continue;
+      if (existing) {
+        // Update name/description to English if it was previously in Spanish
+        await ctx.db.patch(existing._id, {
+          name: row.name,
+          description: row.description,
+        });
+        continue;
+      }
       await ctx.db.insert("allergens", {
         slug: row.slug,
         name: row.name,

@@ -20,7 +20,8 @@ const preferencesValidator = v.object({
   sweetTooth: v.optional(v.boolean()),
 });
 
-type PairingResult = { name: string; matchPercentage: number; reason?: string };
+type PairingItemResult = { menuItemName: string; type: 'dish' | 'drink' | 'dessert' };
+type PairingResult = { name: string; matchPercentage: number; reason?: string; items: PairingItemResult[] };
 export const generateRecommendations = action({
   args: {
     restaurantId: v.id('restaurants'),
@@ -31,13 +32,14 @@ export const generateRecommendations = action({
     if (!identity) throw new Error('Sign in required to get recommendations');
 
     const userId: Id<'users'> = await ctx.runMutation(internal.users.getOrCreateUser, {
+      tokenIdentifier: identity.tokenIdentifier,
       subject: identity.subject,
       email: identity.email ?? undefined,
       name: identity.name ?? undefined,
     });
 
     const [menuItems, allergens] = await Promise.all([
-      ctx.runQuery(api.menuItems.listByRestaurant, { restaurantId: args.restaurantId }),
+      ctx.runQuery(api.menuItems.listAvailableByRestaurant, { restaurantId: args.restaurantId }),
       ctx.runQuery(api.allergens.listAllergens, {}),
     ]);
 
@@ -45,7 +47,7 @@ export const generateRecommendations = action({
     const menuText = menuItems
       .map(
         (m: Doc<'menuItems'>) =>
-          `- ${m.name} (category: ${m.category}): ${m.description}. Allergens: ${(m.allergenIds ?? []).map((id: Id<'allergens'>) => allergenMap.get(id) ?? id).join(', ') || 'none'}. Diet: ${(m.dietTags ?? []).join(', ') || 'any'}. Alcohol: ${m.containsAlcohol ? 'yes' : 'no'}.`,
+          `- ${m.name} (category: ${m.category}): ${m.description}. Allergens: ${(m.allergenIds ?? []).map((id: Id<'allergens'>) => allergenMap.get(id) ?? id).join(', ') || 'none'}. Diet: ${(m.dietTags ?? []).join(', ') || 'any'}. Alcohol level: ${m.alcoholLevel ?? 'none'}.`,
       )
       .join('\n');
 
@@ -57,12 +59,12 @@ export const generateRecommendations = action({
 - Allergens to avoid: ${allergenNames || 'none'}
 - Diet: ${prefs.dietPreference}
 - Alcohol tolerance: ${prefs.alcoholTolerance}
- - Sweet tooth (wants dessert): ${prefs.sweetTooth ? 'yes' : 'no'}
+- Include dessert: ${prefs.sweetTooth ? 'yes' : 'no'}
 
 Menu:
 ${menuText}
 
-Return exactly 3 menu item recommendations (from the list above) that best match the user's preferences. Respond with a single JSON object with key "recommendations" containing an array of 3 objects. Each object must have: "menuItemName" (exact name from the menu), "matchPercentage" (0-100), "reason" (short explanation). No other text.`;
+Generate exactly 3 different pairings. Each pairing is a complete set: one dish + one beverage${prefs.sweetTooth ? ' + one dessert' : ''}. Use different items across pairings — do not repeat the same dish or beverage.`;
 
     const model =
       process.env.OPENROUTER_MODEL ??
@@ -71,8 +73,23 @@ Return exactly 3 menu item recommendations (from the list above) that best match
       // current default, kept for backwards compatibility
       'gpt-4o-mini';
 
-    const systemPrompt =
-      "You are a food and drink pairing expert. Given a user's taste and dietary preferences and a restaurant menu, recommend pairings that best match.\n\nRules:\n- Always choose exactly ONE main dish (category 'Comida' or similar).\n- Always choose exactly ONE drink (category 'Coctelería' or 'Bebidas para conductores').\n- If the user has a sweet tooth (sweetTooth = true), also choose exactly ONE dessert (category 'Postres' or similar).\n- If sweetTooth = false, DO NOT include a dessert — only dish + drink.\n\nOutput format:\nRespond with a single JSON object with key 'recommendations' containing an array of 2 or 3 objects (2 = dish + drink, 3 = dish + drink + dessert). Each object must have: menuItemName (exact name from the menu), matchPercentage (0-100), reason (short explanation), and type ('dish' | 'drink' | 'dessert'). No other text.";
+    const systemPrompt = `You are a food and drink pairing expert. Given a user's taste and dietary preferences and a restaurant menu, recommend 3 complete pairings.
+
+Rules:
+- Each pairing is a SET of items meant to be enjoyed together: one dish (from 'Appetizers' or 'Main Dishes') + one beverage (from 'Beverages') + optionally one dessert (from 'Desserts').
+- Generate exactly 3 different pairings. Each pairing should use different dishes and beverages — avoid repeating the same item across pairings.
+- Respect the user's alcohol tolerance when choosing beverages (alcoholLevel 'none' means pick non-alcoholic beverages only).
+- Respect allergen restrictions strictly — never recommend items containing allergens the user wants to avoid.
+- Only include a dessert in each pairing if the user wants dessert.
+
+Output format:
+Respond with a single JSON object with key "pairings" containing an array of exactly 3 objects. Each pairing object must have:
+- "name": a short creative name for this pairing (e.g. "The Mediterranean")
+- "matchPercentage": 0-100 overall match score
+- "reason": short explanation of why these items go well together
+- "items": array of objects, each with "menuItemName" (exact name from the menu) and "type" ("dish" | "drink" | "dessert")
+
+No other text.`;
 
     const raw = await (async () => {
       const baseURL = process.env.OPENROUTER_BASE_URL;
@@ -104,57 +121,76 @@ Return exactly 3 menu item recommendations (from the list above) that best match
 
     if (!raw) throw new Error('No response from LLM');
 
-    let recommendations: Array<{ menuItemName: string; matchPercentage: number; reason?: string }>;
+    type LLMPairing = {
+      name?: string;
+      matchPercentage?: number;
+      reason?: string;
+      items?: Array<{ menuItemName?: string; type?: string }>;
+    };
+
+    let pairings: LLMPairing[];
     try {
-      const parsed = JSON.parse(raw) as
-        | { recommendations?: Array<{ menuItemName: string; matchPercentage: number; reason?: string }> }
-        | Array<{ menuItemName: string; matchPercentage: number; reason?: string }>;
-      recommendations = Array.isArray(parsed)
-        ? parsed
-        : Array.isArray(parsed.recommendations)
-          ? parsed.recommendations
-          : [];
+      const parsed = JSON.parse(raw) as { pairings?: LLMPairing[] };
+      pairings = Array.isArray(parsed.pairings) ? parsed.pairings : [];
     } catch {
-      recommendations = [];
+      pairings = [];
     }
 
     const nameToItem = new Map(menuItems.map((m: Doc<'menuItems'>) => [m.name.trim().toLowerCase(), m]));
-    const items: Array<{ menuItemId: Id<'menuItems'>; menuItemName?: string; matchPercentage: number; reason?: string }> = [];
 
-    for (const rec of recommendations.slice(0, 3)) {
-      const name = (rec.menuItemName ?? '').trim();
-      const key = name.toLowerCase();
-      const menuItem =
+    const findMenuItem = (itemName: string) => {
+      const key = itemName.trim().toLowerCase();
+      return (
         nameToItem.get(key) ??
         menuItems.find(
           (m: Doc<'menuItems'>) => m.name.toLowerCase().includes(key) || key.includes(m.name.toLowerCase()),
-        );
-      if (menuItem) {
-        items.push({
-          menuItemId: menuItem._id,
-          menuItemName: menuItem.name,
-          matchPercentage: Math.min(100, Math.max(0, Number(rec.matchPercentage) || 0)),
-          reason: rec.reason,
+        )
+      );
+    };
+
+    // Flatten all items for storage
+    const allItems: Array<{ menuItemId: Id<'menuItems'>; menuItemName?: string; pairingName?: string; matchPercentage: number; reason?: string }> = [];
+
+    const results: PairingResult[] = [];
+
+    for (const pairing of pairings.slice(0, 3)) {
+      const pairingItems: PairingItemResult[] = [];
+      for (const item of pairing.items ?? []) {
+        const name = (item.menuItemName ?? '').trim();
+        const menuItem = findMenuItem(name);
+        if (menuItem) {
+          pairingItems.push({
+            menuItemName: menuItem.name,
+            type: (item.type as 'dish' | 'drink' | 'dessert') ?? 'dish',
+          });
+          allItems.push({
+            menuItemId: menuItem._id,
+            menuItemName: menuItem.name,
+            pairingName: pairing.name,
+            matchPercentage: Math.min(100, Math.max(0, Number(pairing.matchPercentage) || 0)),
+            reason: pairing.reason,
+          });
+        }
+      }
+      if (pairingItems.length > 0) {
+        results.push({
+          name: pairing.name ?? `Pairing ${results.length + 1}`,
+          matchPercentage: Math.min(100, Math.max(0, Number(pairing.matchPercentage) || 0)),
+          reason: pairing.reason,
+          items: pairingItems,
         });
       }
     }
 
-    if (items.length === 0) throw new Error('Could not match any recommendations to menu items');
+    if (results.length === 0) throw new Error('Could not match any recommendations to menu items');
 
     await ctx.runMutation(internal.recommendationsInternal.insertRecommendation, {
       userId,
       restaurantId: args.restaurantId,
-      items,
+      items: allItems,
       preferenceSnapshot: prefs,
     });
 
-    const names = new Map(menuItems.map((m: Doc<'menuItems'>) => [m._id, m.name]));
-    return items.map(
-      (it): PairingResult => ({
-        name: names.get(it.menuItemId) ?? 'Unknown',
-        matchPercentage: it.matchPercentage,
-        reason: it.reason,
-      }),
-    );
+    return results;
   },
 });

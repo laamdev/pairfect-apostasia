@@ -43,10 +43,9 @@ export const dietPreferenceValidator = v.union(
 );
 
 export const alcoholToleranceValidator = v.union(
-  v.literal("teetotal"),
+  v.literal("none"),
   v.literal("low"),
   v.literal("mid"),
   v.literal("high"),
-  v.literal("boozy"),
 );
 

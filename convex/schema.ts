@@ -19,11 +19,17 @@ export default defineSchema({
     .index("by_sortOrder", ["sortOrder"]),
 
   users: defineTable({
+    tokenIdentifier: v.optional(v.string()),
     subject: v.string(),
     email: v.optional(v.string()),
     name: v.optional(v.string()),
-    role: v.optional(v.union(v.literal("client"), v.literal("staff"))),
-  }).index("by_subject", ["subject"]),
+    role: v.optional(v.union(v.literal("admin"), v.literal("diner"))),
+    profileImageStorageId: v.optional(v.id("_storage")),
+    profileImageUrl: v.optional(v.string()),
+  })
+    .index("by_tokenIdentifier", ["tokenIdentifier"])
+    .index("by_subject", ["subject"])
+    .index("by_email", ["email"]),
 
   restaurants: defineTable({
     name: v.string(),
@@ -37,8 +43,7 @@ export default defineSchema({
     userId: v.id("users"),
     role: v.union(
       v.literal("owner"),
-      v.literal("admin"),
-      v.literal("editor"),
+      v.literal("staff"),
     ),
   })
     .index("by_restaurantId", ["restaurantId"])
@@ -52,13 +57,16 @@ export default defineSchema({
     category: v.string(),
     allergenIds: v.array(v.id("allergens")),
     dietTags: v.optional(v.array(dietPreferenceValidator)),
-    containsAlcohol: v.boolean(),
+    ingredients: v.optional(v.array(v.string())),
+    pairingNotes: v.optional(v.array(v.string())),
     alcoholLevel: v.optional(alcoholToleranceValidator),
     tasteProfile: v.optional(v.array(tasteProfileValidator)),
     spiceLevel: v.optional(spiceLevelValidator),
     price: v.optional(v.number()),
     imageStorageId: v.optional(v.id("_storage")),
     sortOrder: v.optional(v.number()),
+    isAvailable: v.optional(v.boolean()),
+    isSpecial: v.optional(v.boolean()),
   })
     .index("by_restaurantId", ["restaurantId"])
     .index("by_restaurantId_and_category", ["restaurantId", "category"]),
@@ -87,6 +95,15 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_restaurantId_and_userId", ["restaurantId", "userId"]),
 
+  pendingInvitations: defineTable({
+    restaurantId: v.id("restaurants"),
+    email: v.string(),
+    role: v.union(v.literal("owner"), v.literal("staff")),
+    invitedBy: v.id("users"),
+  })
+    .index("by_email", ["email"])
+    .index("by_restaurantId", ["restaurantId"]),
+
   recommendations: defineTable({
     userId: v.id("users"),
     restaurantId: v.id("restaurants"),
@@ -94,11 +111,11 @@ export default defineSchema({
       v.object({
         menuItemId: v.id("menuItems"),
         menuItemName: v.optional(v.string()),
+        pairingName: v.optional(v.string()),
         matchPercentage: v.number(),
         reason: v.optional(v.string()),
       }),
     ),
-    clientProfileId: v.optional(v.id("clientProfiles")),
     // Preferences snapshot can be stored for historical context if desired.
     preferenceSnapshot: v.optional(
       v.object({

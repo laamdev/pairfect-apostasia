@@ -1,8 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { requireUser, requireRestaurantMember } from "./authHelpers";
+import { getCurrentUser, requireUser, requireRestaurantMember } from "./authHelpers";
 
 export const getBySlug = query({
   args: { slug: v.string() },
@@ -21,12 +20,15 @@ export const listRestaurants = query({
       .query("restaurants")
       .order("desc")
       .take(100);
-    return restaurants.map((r) => ({
-      _id: r._id,
-      name: r.name,
-      slug: r.slug,
-      description: r.description,
-    }));
+    return Promise.all(
+      restaurants.map(async (r) => ({
+        _id: r._id,
+        name: r.name,
+        slug: r.slug,
+        description: r.description,
+        logoUrl: r.logoStorageId ? await ctx.storage.getUrl(r.logoStorageId) : null,
+      })),
+    );
   },
 });
 
@@ -34,13 +36,7 @@ export const listRestaurants = query({
 export const listMyRestaurants = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_subject", (q) => q.eq("subject", identity.subject))
-      .unique();
+    const user = await getCurrentUser(ctx);
     if (!user) return [];
 
     const memberships = await ctx.db
@@ -52,11 +48,15 @@ export const listMyRestaurants = query({
       memberships.map(async (m) => {
         const restaurant = await ctx.db.get(m.restaurantId);
         if (!restaurant) return null;
+        const logoUrl = restaurant.logoStorageId
+          ? await ctx.storage.getUrl(restaurant.logoStorageId)
+          : null;
         return {
           _id: restaurant._id,
           name: restaurant.name,
           slug: restaurant.slug,
           description: restaurant.description,
+          logoUrl,
           role: m.role,
         };
       }),
@@ -66,25 +66,17 @@ export const listMyRestaurants = query({
   },
 });
 
-/** Create a new restaurant. The creator becomes the owner. */
+/** Create a new restaurant. Admin only. */
 export const createRestaurant = mutation({
   args: {
     name: v.string(),
     slug: v.string(),
     description: v.optional(v.string()),
+    staffUserId: v.optional(v.id("users")),
   },
   handler: async (ctx, args): Promise<Id<"restaurants">> => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Sign in required");
-
-    const userId: Id<"users"> = await ctx.runMutation(
-      internal.users.getOrCreateUser,
-      {
-        subject: identity.subject,
-        email: identity.email ?? undefined,
-        name: identity.name ?? undefined,
-      },
-    );
+    const user = await requireUser(ctx);
+    if (user.role !== "admin") throw new Error("Only admins can create restaurants");
 
     // Ensure slug is unique
     const existing = await ctx.db
@@ -99,20 +91,33 @@ export const createRestaurant = mutation({
       description: args.description,
     });
 
-    // Make creator the owner
-    await ctx.db.insert("restaurantMembers", {
-      restaurantId,
-      userId,
-      role: "owner",
-    });
-
-    // Set user role to staff if not already set
-    const user = await ctx.db.get(userId);
-    if (user && !user.role) {
-      await ctx.db.patch(userId, { role: "staff" });
+    // If a staff user is specified, link them to the restaurant (avoid duplicates)
+    if (args.staffUserId) {
+      const existing = await ctx.db
+        .query("restaurantMembers")
+        .withIndex("by_restaurantId_and_userId", (q) =>
+          q.eq("restaurantId", restaurantId).eq("userId", args.staffUserId!),
+        )
+        .unique();
+      if (!existing) {
+        await ctx.db.insert("restaurantMembers", {
+          restaurantId,
+          userId: args.staffUserId,
+          role: "owner",
+        });
+      }
     }
 
     return restaurantId;
+  },
+});
+
+/** Generate an upload URL for file storage. Only restaurant owners can upload. */
+export const generateUploadUrl = mutation({
+  args: { restaurantId: v.id("restaurants") },
+  handler: async (ctx, args) => {
+    await requireRestaurantMember(ctx, args.restaurantId, ["owner"]);
+    return await ctx.storage.generateUploadUrl();
   },
 });
 
@@ -122,13 +127,15 @@ export const updateRestaurant = mutation({
     restaurantId: v.id("restaurants"),
     name: v.optional(v.string()),
     description: v.optional(v.string()),
+    logoStorageId: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
-    await requireRestaurantMember(ctx, args.restaurantId, ["owner", "admin"]);
+    await requireRestaurantMember(ctx, args.restaurantId, ["owner"]);
 
-    const updates: Record<string, string> = {};
+    const updates: Record<string, string | Id<"_storage">> = {};
     if (args.name !== undefined) updates.name = args.name;
     if (args.description !== undefined) updates.description = args.description;
+    if (args.logoStorageId !== undefined) updates.logoStorageId = args.logoStorageId;
 
     if (Object.keys(updates).length > 0) {
       await ctx.db.patch(args.restaurantId, updates);

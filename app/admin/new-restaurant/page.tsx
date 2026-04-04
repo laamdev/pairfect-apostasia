@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
+import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -41,13 +42,14 @@ export default function NewRestaurantPage() {
   return (
     <main className="p-8 max-w-xl mx-auto flex flex-col gap-6">
       <div>
-        <Link href="/admin" className="text-sm text-muted hover:text-foreground transition-colors">
+        <Link href="/admin" className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1">
+          <ArrowLeft className="size-3.5" />
           Back to dashboard
         </Link>
       </div>
       <h1 className="text-2xl font-semibold">New Restaurant</h1>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <form onSubmit={handleSubmit} className="border border-border rounded-lg p-5 bg-surface flex flex-col gap-5">
         <div>
           <label className="block text-sm font-medium mb-1">Name</label>
           <input type="text" value={name} onChange={(e) => handleNameChange(e.target.value)} className="w-full border border-border rounded px-3 py-2 bg-surface text-foreground focus:border-accent outline-none" required />
@@ -55,7 +57,7 @@ export default function NewRestaurantPage() {
         <div>
           <label className="block text-sm font-medium mb-1">Slug (URL)</label>
           <input type="text" value={slug} onChange={(e) => setSlug(e.target.value)} className="w-full border border-border rounded px-3 py-2 bg-surface text-foreground font-mono text-sm focus:border-accent outline-none" required />
-          <p className="text-xs text-muted mt-1">Used in the URL: /restaurant/{slug || '...'}</p>
+          <p className="text-xs text-muted-foreground mt-1">Used in the URL: /restaurant/{slug || '...'}</p>
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Description (optional)</label>

@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as admin from "../admin.js";
 import type * as allergens from "../allergens.js";
 import type * as authHelpers from "../authHelpers.js";
 import type * as clientProfiles from "../clientProfiles.js";
@@ -30,6 +31,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  admin: typeof admin;
   allergens: typeof allergens;
   authHelpers: typeof authHelpers;
   clientProfiles: typeof clientProfiles;

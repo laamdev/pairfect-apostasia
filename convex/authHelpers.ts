@@ -3,6 +3,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 
 /**
  * Get the current authenticated user from the users table.
+ * Looks up by tokenIdentifier first, falls back to subject for old records.
  * Returns null if not authenticated or user not found.
  */
 export async function getCurrentUser(
@@ -11,6 +12,16 @@ export async function getCurrentUser(
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) return null;
 
+  // Primary lookup: tokenIdentifier (new records)
+  const byToken = await ctx.db
+    .query("users")
+    .withIndex("by_tokenIdentifier", (q) =>
+      q.eq("tokenIdentifier", identity.tokenIdentifier),
+    )
+    .unique();
+  if (byToken) return byToken;
+
+  // Fallback: subject (old records before migration)
   return await ctx.db
     .query("users")
     .withIndex("by_subject", (q) => q.eq("subject", identity.subject))
@@ -35,7 +46,7 @@ export async function requireUser(
 export async function requireRestaurantMember(
   ctx: QueryCtx | MutationCtx,
   restaurantId: Id<"restaurants">,
-  allowedRoles?: Array<"owner" | "admin" | "editor">,
+  allowedRoles?: Array<"owner" | "staff">,
 ): Promise<{ user: Doc<"users">; membership: Doc<"restaurantMembers"> }> {
   const user = await requireUser(ctx);
 
