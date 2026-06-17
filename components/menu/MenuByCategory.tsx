@@ -1,9 +1,9 @@
 'use client';
 
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
+import { CategoryAccordion } from './CategoryAccordion';
 import { MenuItemCard, type MenuItemData, type AllergenData } from './MenuItemCard';
 
-const CATEGORY_ORDER = ['Appetizers', 'Main Dishes', 'Side Dishes', 'Beverages', 'Desserts'];
+const CATEGORY_ORDER = ['Entrantes', 'Platos principales', 'Guarniciones', 'Bebidas', 'Postres'];
 
 export const MenuByCategory = ({
   items,
@@ -13,7 +13,7 @@ export const MenuByCategory = ({
   allergens: AllergenData[];
 }) => {
   const byCategory = items.reduce<Record<string, MenuItemData[]>>((acc, item) => {
-    const cat = item.category || 'Other';
+    const cat = item.category || 'Otros';
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(item);
     return acc;
@@ -25,24 +25,16 @@ export const MenuByCategory = ({
   });
 
   return (
-    <Accordion defaultValue={categories.length > 0 ? [categories[0]] : []}>
-      {categories.map((cat) => (
-        <AccordionItem key={cat} value={cat}>
-          <AccordionTrigger className="text-lg font-medium text-foreground flex items-baseline">
-            <span>{cat}</span>
-            <span className="ml-4 text-xs font-normal text-muted-foreground font-sans">
-              {byCategory[cat].length} {byCategory[cat].length === 1 ? 'item' : 'items'}
-            </span>
-          </AccordionTrigger>
-          <AccordionContent>
-            <ul className="flex flex-col gap-2">
-              {byCategory[cat].map((item) => (
-                <MenuItemCard key={item._id} item={item} allergens={allergens} />
-              ))}
-            </ul>
-          </AccordionContent>
-        </AccordionItem>
-      ))}
-    </Accordion>
+    <CategoryAccordion
+      categories={categories}
+      countFor={(cat) => byCategory[cat].length}
+      renderItems={(cat) => (
+        <ul className="flex flex-col gap-2">
+          {byCategory[cat].map((item) => (
+            <MenuItemCard key={item._id} item={item} allergens={allergens} />
+          ))}
+        </ul>
+      )}
+    />
   );
 };

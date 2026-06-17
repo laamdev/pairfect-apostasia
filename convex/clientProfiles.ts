@@ -2,12 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getCurrentUser, requireUser } from "./authHelpers";
-import {
-  alcoholToleranceValidator,
-  dietPreferenceValidator,
-  spiceLevelValidator,
-  tasteProfileValidator,
-} from "./validators";
+import { preferenceFields } from "./validators";
 
 export const getGlobalProfile = query({
   args: {},
@@ -25,12 +20,7 @@ export const getGlobalProfile = query({
 
 export const upsertGlobalProfile = mutation({
   args: {
-    tasteProfile: v.array(tasteProfileValidator),
-    spiceLevel: spiceLevelValidator,
-    allergenIdsToAvoid: v.array(v.id("allergens")),
-    dietPreference: dietPreferenceValidator,
-    alcoholTolerance: alcoholToleranceValidator,
-    sweetTooth: v.optional(v.boolean()),
+    ...preferenceFields,
     displayName: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<Id<"clientProfiles">> => {
@@ -50,6 +40,9 @@ export const upsertGlobalProfile = mutation({
       dietPreference: args.dietPreference,
       alcoholTolerance: args.alcoholTolerance,
       sweetTooth: args.sweetTooth ?? false,
+      adventurousness: args.adventurousness,
+      baseSpirits: args.baseSpirits,
+      occasion: args.occasion,
       displayName: args.displayName,
     };
 
@@ -59,8 +52,11 @@ export const upsertGlobalProfile = mutation({
         existing.dietPreference !== base.dietPreference ||
         existing.alcoholTolerance !== base.alcoholTolerance ||
         existing.sweetTooth !== base.sweetTooth ||
+        existing.adventurousness !== base.adventurousness ||
+        existing.occasion !== base.occasion ||
         existing.displayName !== base.displayName ||
         JSON.stringify(existing.tasteProfile) !== JSON.stringify(base.tasteProfile) ||
+        JSON.stringify(existing.baseSpirits ?? []) !== JSON.stringify(base.baseSpirits ?? []) ||
         JSON.stringify(existing.allergenIdsToAvoid) !== JSON.stringify(base.allergenIdsToAvoid);
       if (changed) {
         await ctx.db.patch(existing._id, base);
@@ -101,12 +97,7 @@ export const upsertRestaurantProfile = mutation({
   args: {
     restaurantId: v.id("restaurants"),
     useGlobal: v.boolean(),
-    tasteProfile: v.array(tasteProfileValidator),
-    spiceLevel: spiceLevelValidator,
-    allergenIdsToAvoid: v.array(v.id("allergens")),
-    dietPreference: dietPreferenceValidator,
-    alcoholTolerance: alcoholToleranceValidator,
-    sweetTooth: v.optional(v.boolean()),
+    ...preferenceFields,
   },
   handler: async (ctx, args): Promise<Id<"restaurantClientProfiles"> | null> => {
     const user = await requireUser(ctx);
@@ -136,6 +127,9 @@ export const upsertRestaurantProfile = mutation({
       dietPreference: args.dietPreference,
       alcoholTolerance: args.alcoholTolerance,
       sweetTooth: args.sweetTooth ?? false,
+      adventurousness: args.adventurousness,
+      baseSpirits: args.baseSpirits,
+      occasion: args.occasion,
     };
 
     if (existing) {
@@ -144,7 +138,10 @@ export const upsertRestaurantProfile = mutation({
         existing.dietPreference !== base.dietPreference ||
         existing.alcoholTolerance !== base.alcoholTolerance ||
         existing.sweetTooth !== base.sweetTooth ||
+        existing.adventurousness !== base.adventurousness ||
+        existing.occasion !== base.occasion ||
         JSON.stringify(existing.tasteProfile) !== JSON.stringify(base.tasteProfile) ||
+        JSON.stringify(existing.baseSpirits ?? []) !== JSON.stringify(base.baseSpirits ?? []) ||
         JSON.stringify(existing.allergenIdsToAvoid) !== JSON.stringify(base.allergenIdsToAvoid);
       if (changed) {
         await ctx.db.patch(existing._id, base);

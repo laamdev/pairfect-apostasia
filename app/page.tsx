@@ -5,27 +5,47 @@ import { api } from '../convex/_generated/api';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { PageWrapper } from '@/components/PageWrapper';
-import { RestaurantList } from '@/components/RestaurantList';
+import { RestaurantMenuView } from '@/components/RestaurantMenuView';
+import { useRestaurant } from '@/hooks/useRestaurant';
+import { PageHeaderSkeleton, CardListSkeleton } from '@/components/skeletons';
 
 export default function Home() {
   const currentUser = useQuery(api.users.currentUser);
+  const restaurant = useRestaurant();
   const router = useRouter();
 
+  // Employees and admins go straight to the management area.
+  const isStaff = currentUser?.role === 'admin' || currentUser?.isRestaurantMember;
   useEffect(() => {
-    if (currentUser?.role === 'admin' || currentUser?.isRestaurantMember) {
+    if (isStaff) {
       router.replace('/admin');
     }
-  }, [currentUser, router]);
+  }, [isStaff, router]);
 
-  if (currentUser?.role === 'admin' || currentUser?.isRestaurantMember) return null;
+  if (isStaff) return null;
+
+  if (restaurant === undefined) {
+    return (
+      <PageWrapper>
+        <PageHeaderSkeleton />
+        <CardListSkeleton count={4} />
+      </PageWrapper>
+    );
+  }
+
+  if (restaurant === null) {
+    return (
+      <PageWrapper>
+        <p className="text-muted-foreground">
+          El restaurante aún no está configurado. Ejecuta el seed para crear la carta.
+        </p>
+      </PageWrapper>
+    );
+  }
 
   return (
     <PageWrapper>
-      <div>
-        <h1 className="text-4xl font-bold">Pairfect</h1>
-        <p className="text-muted-foreground mt-2">Discover the perfect pairings for you at every restaurant</p>
-      </div>
-      <RestaurantList />
+      <RestaurantMenuView restaurant={restaurant} />
     </PageWrapper>
   );
 }

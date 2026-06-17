@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internalQuery, mutation, query } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { requireRestaurantMember } from "./authHelpers";
 import {
@@ -46,6 +46,20 @@ export const listAvailableByRestaurant = query({
           : null,
       })),
     );
+  },
+});
+
+/** Lean list of available items for the pairing action — no image URL
+ *  resolution (the LLM prompt doesn't use images, so we skip N storage calls). */
+export const listAvailableForPairing = internalQuery({
+  args: { restaurantId: v.id("restaurants") },
+  handler: async (ctx, args) => {
+    const items = await ctx.db
+      .query("menuItems")
+      .withIndex("by_restaurantId", (q) => q.eq("restaurantId", args.restaurantId))
+      .order("asc")
+      .take(200);
+    return items.filter((item) => item.isAvailable !== false);
   },
 });
 
@@ -131,7 +145,7 @@ export const updateMenuItem = mutation({
   },
   handler: async (ctx, args) => {
     const item = await ctx.db.get(args.menuItemId);
-    if (!item) throw new Error("Menu item not found");
+    if (!item) throw new Error("No se encontró el plato");
 
     await requireRestaurantMember(ctx, item.restaurantId, ["owner"]);
 
@@ -153,7 +167,7 @@ export const deleteMenuItem = mutation({
   args: { menuItemId: v.id("menuItems") },
   handler: async (ctx, args) => {
     const item = await ctx.db.get(args.menuItemId);
-    if (!item) throw new Error("Menu item not found");
+    if (!item) throw new Error("No se encontró el plato");
 
     await requireRestaurantMember(ctx, item.restaurantId, ["owner"]);
 

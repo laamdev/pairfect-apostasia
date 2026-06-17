@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@workos-inc/authkit-nextjs/components';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
@@ -32,21 +33,28 @@ export const Header = () => {
 
   return (
     <header className="sticky top-0 z-10 bg-surface p-4 border-b border-border flex flex-row justify-between items-center">
-      <Link href="/" className="font-heading text-lg font-semibold text-accent">
-        Pairfect
+      <Link href="/" aria-label="La Apostasía" className="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-accent">
+        <Image
+          src="/images/apostasia-logo.webp"
+          alt="La Apostasía"
+          width={40}
+          height={40}
+          priority
+          className="size-9 object-contain invert"
+        />
       </Link>
 
       <Popover>
         <PopoverTrigger className="cursor-pointer rounded-full outline-none focus-visible:ring-2 focus-visible:ring-accent">
           <Avatar>
-            {currentUser?.avatarUrl && <AvatarImage src={currentUser.avatarUrl} alt={currentUser.name ?? 'Profile'} />}
+            {currentUser?.avatarUrl && <AvatarImage src={currentUser.avatarUrl} alt={currentUser.name ?? 'Perfil'} />}
             <AvatarFallback>{initials || '?'}</AvatarFallback>
           </Avatar>
         </PopoverTrigger>
         <PopoverContent align="end" sideOffset={8} className="w-56">
           <PopoverHeader>
             <p className="font-medium text-foreground truncate">
-              {currentUser?.name ?? 'User'}
+              {currentUser?.name ?? 'Usuario'}
             </p>
             <p className="text-xs text-muted-foreground truncate">
               {user.email}
@@ -59,7 +67,7 @@ export const Header = () => {
               className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >
               <User className="size-4" />
-              My Profile
+              Mi perfil
             </Link>
             {isStaffOrAdmin && (
               <Link
@@ -67,7 +75,7 @@ export const Header = () => {
                 className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
               >
                 <Settings className="size-4" />
-                Dashboard
+                Panel
               </Link>
             )}
           </nav>
@@ -77,7 +85,7 @@ export const Header = () => {
             className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
           >
             <LogOut className="size-4" />
-            Sign out
+            Cerrar sesión
           </button>
         </PopoverContent>
       </Popover>

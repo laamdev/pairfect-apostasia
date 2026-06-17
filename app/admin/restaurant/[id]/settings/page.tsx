@@ -12,35 +12,38 @@ import { AddMemberForm } from '@/components/restaurant-settings/AddMemberForm';
 import { PageWrapper } from '@/components/PageWrapper';
 import { ArrowLeft } from 'lucide-react';
 import { CardListSkeleton } from '@/components/skeletons';
+import { useRestaurant } from '@/hooks/useRestaurant';
 
 export default function RestaurantSettingsPage() {
   const params = useParams();
   const restaurantId = params.id as Id<'restaurants'>;
-  const restaurants = useQuery(api.restaurants.listMyRestaurants);
+  const restaurant = useRestaurant();
+  const user = useQuery(api.users.currentUser);
   const members = useQuery(api.restaurantMembers.listMembers, { restaurantId });
-  const pendingInvitations = useQuery(api.restaurantMembers.listPendingInvitations, { restaurantId });
-  const restaurant = restaurants?.find((r) => r._id === restaurantId);
+  const pendingInvitations = useQuery(api.restaurantMembers.listPendingInvitations, {
+    restaurantId,
+  });
 
-  if (restaurants === undefined)
+  if (restaurant === undefined || user === undefined)
     return (
       <PageWrapper>
         <CardListSkeleton count={3} />
       </PageWrapper>
     );
 
-  if (!restaurant) {
+  if (restaurant === null) {
     return (
       <PageWrapper>
-        <p>Restaurant not found or you don't have access.</p>
+        <p>El restaurante aún no está configurado.</p>
         <Link href="/admin" className="mt-4 inline-flex items-center gap-1 text-sm text-accent">
           <ArrowLeft className="size-3.5" />
-          Back to dashboard
+          Volver
         </Link>
       </PageWrapper>
     );
   }
 
-  const canManage = restaurant.role === 'owner';
+  const canManage = user?.membershipRole === 'owner';
 
   return (
     <PageWrapper>
@@ -50,13 +53,13 @@ export default function RestaurantSettingsPage() {
           className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
         >
           <ArrowLeft className="size-3.5" />
-          Back to {restaurant.name}
+          Volver a {restaurant.name}
         </Link>
       </div>
-      <h1 className="text-2xl font-semibold">Settings</h1>
+      <h1 className="text-3xl font-semibold">Ajustes</h1>
       {canManage && <RestaurantInfoForm restaurantId={restaurantId} restaurant={restaurant} />}
       <section>
-        <h2 className="text-lg font-medium mb-4">Team</h2>
+        <h2 className="text-lg font-medium mb-4">Equipo</h2>
         {members === undefined && <CardListSkeleton count={2} />}
         {members && members.length > 0 && (
           <ul className="flex flex-col gap-2 mb-4">
@@ -75,7 +78,9 @@ export default function RestaurantSettingsPage() {
         )}
         {canManage && pendingInvitations && pendingInvitations.length > 0 && (
           <>
-            <h3 className="text-sm font-medium text-muted-foreground mt-2 mb-2">Pending invitations</h3>
+            <h3 className="text-sm font-medium text-muted-foreground mt-2 mb-2">
+              Invitaciones pendientes
+            </h3>
             <ul className="flex flex-col gap-2 mb-4">
               {pendingInvitations.map((inv) => (
                 <PendingInvitationRow key={inv._id} invitation={inv} />

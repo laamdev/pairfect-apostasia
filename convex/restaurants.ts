@@ -13,6 +13,32 @@ export const getBySlug = query({
   },
 });
 
+/**
+ * Resolve the single restaurant this (single-tenant) app is pinned to, by slug.
+ * Returns the restaurant with a resolved logo URL, or null if it hasn't been
+ * seeded yet. Multi-tenant consumers keep using the explicit-id functions.
+ */
+export const getCurrent = query({
+  args: { slug: v.string() },
+  handler: async (ctx, args) => {
+    const restaurant = await ctx.db
+      .query("restaurants")
+      .withIndex("by_slug", (q) => q.eq("slug", args.slug))
+      .unique();
+    if (!restaurant) return null;
+
+    return {
+      _id: restaurant._id,
+      name: restaurant.name,
+      slug: restaurant.slug,
+      description: restaurant.description,
+      logoUrl: restaurant.logoStorageId
+        ? await ctx.storage.getUrl(restaurant.logoStorageId)
+        : null,
+    };
+  },
+});
+
 export const listRestaurants = query({
   args: {},
   handler: async (ctx) => {
@@ -76,14 +102,14 @@ export const createRestaurant = mutation({
   },
   handler: async (ctx, args): Promise<Id<"restaurants">> => {
     const user = await requireUser(ctx);
-    if (user.role !== "admin") throw new Error("Only admins can create restaurants");
+    if (user.role !== "admin") throw new Error("Solo los administradores pueden crear restaurantes");
 
     // Ensure slug is unique
     const existing = await ctx.db
       .query("restaurants")
       .withIndex("by_slug", (q) => q.eq("slug", args.slug))
       .unique();
-    if (existing) throw new Error("A restaurant with this slug already exists");
+    if (existing) throw new Error("Ya existe un restaurante con este identificador (slug)");
 
     const restaurantId = await ctx.db.insert("restaurants", {
       name: args.name,

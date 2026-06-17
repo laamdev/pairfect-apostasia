@@ -12,7 +12,7 @@ export const RestaurantList = () => {
   if (restaurants === undefined) {
     return (
       <section>
-        <h2 className="text-2xl font-semibold mb-4">Restaurants</h2>
+        <h2 className="text-2xl font-semibold mb-4">Restaurantes</h2>
         <CardListSkeleton count={3} />
       </section>
     );
@@ -20,9 +20,9 @@ export const RestaurantList = () => {
 
   return (
     <section>
-      <h2 className="text-2xl font-semibold mb-4">Restaurants</h2>
+      <h2 className="text-2xl font-semibold mb-4">Restaurantes</h2>
       {restaurants.length === 0 ? (
-        <p className="text-muted-foreground">No restaurants available yet.</p>
+        <p className="text-muted-foreground">Aún no hay restaurantes disponibles.</p>
       ) : (
         <ul className="flex flex-col gap-3">
           {restaurants.map((r) => (

@@ -18,8 +18,8 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'Pairfect',
-  description: 'Discover the perfect pairings for you at every restaurant',
+  title: 'La Apostasía',
+  description: 'Descubre el maridaje perfecto de comida y bebida en La Apostasía',
   icons: {
     icon: '/convex.svg',
   },
@@ -38,7 +38,7 @@ export default async function RootLayout({
     accessToken = undefined;
   }
   return (
-    <html lang="en" className={`dark ${jakarta.variable} ${playfair.variable}`}>
+    <html lang="es" className={`dark ${jakarta.variable} ${playfair.variable}`}>
       <body className="antialiased min-h-screen flex flex-col">
         <ConvexClientProvider expectAuth={!!accessToken}>
           <TooltipProvider>

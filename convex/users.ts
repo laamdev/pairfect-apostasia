@@ -10,8 +10,15 @@ import { getCurrentUser } from "./authHelpers";
  */
 async function getOrCreateUserFromIdentity(
   ctx: MutationCtx,
-  identity: { tokenIdentifier: string; subject: string; email?: string; name?: string; pictureUrl?: string },
+  rawIdentity: { tokenIdentifier: string; subject: string; email?: string; name?: string; pictureUrl?: string },
 ): Promise<Id<"users">> {
+  // Normalize email to lowercase so it matches how every `by_email` lookup
+  // (addMember, bootstrapOwnerByEmail, …) queries it.
+  const identity = {
+    ...rawIdentity,
+    email: rawIdentity.email?.toLowerCase(),
+  };
+
   // Try tokenIdentifier first (new records)
   const byToken = await ctx.db
     .query("users")
@@ -96,7 +103,7 @@ export const ensureUser = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Sign in required");
+    if (!identity) throw new Error("Debes iniciar sesión");
 
     const userId = await getOrCreateUserFromIdentity(ctx, {
       tokenIdentifier: identity.tokenIdentifier,
@@ -150,7 +157,7 @@ export const generateProfileImageUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Sign in required");
+    if (!identity) throw new Error("Debes iniciar sesión");
     return await ctx.storage.generateUploadUrl();
   },
 });
@@ -163,7 +170,7 @@ export const updateProfile = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
-    if (!user) throw new Error("Sign in required");
+    if (!user) throw new Error("Debes iniciar sesión");
 
     const patch: Record<string, unknown> = {};
     if (args.name !== undefined) patch.name = args.name;
@@ -198,6 +205,9 @@ export const currentUser = query({
       name: user.name,
       role: user.role ?? "diner",
       isRestaurantMember: !!membership,
+      // Membership role within the restaurant: "owner" (employee admin),
+      // "staff" (read-only employee), or null (diner / not a member).
+      membershipRole: membership?.role ?? null,
       avatarUrl,
     };
   },

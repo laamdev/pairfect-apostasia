@@ -34,7 +34,7 @@ const seedItems: SeedItem[] = [
   // ── Beverages (alcoholic cocktails) ──────────────────────────────────
   {
     name: "Innovación y Tecnología",
-    category: "Beverages",
+    category: "Bebidas",
     description:
       "Mezcla que refleja la luz ultravioleta, con notas cítricas, herbáceas y refrescantes.",
     ingredients: ["gin", "tónica", "cítricos", "hierbas"],
@@ -50,7 +50,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Estilo de Vida y Gastronomía Sana",
-    category: "Beverages",
+    category: "Bebidas",
     description:
       "Un plato convertido en líquido. Notas dulces, ahumadas y amargas, sabor curioso y salino.",
     ingredients: ["whisky", "ingredientes ahumados", "amargos"],
@@ -65,7 +65,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Sostenibilidad y Transición Verde",
-    category: "Beverages",
+    category: "Bebidas",
     description:
       "Drink eco-sostenible con productos de temporada. Sabor equilibrado, notas dulces, cítricas y salinas.",
     ingredients: ["ron", "ingredientes de temporada", "cítricos"],
@@ -80,7 +80,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Individualismo y Social Network",
-    category: "Beverages",
+    category: "Bebidas",
     description:
       "Juego de sabores entre dulce, salino, cítrico y amargo. Se bebe con gafas individualistas y mezclado por el cliente.",
     ingredients: ["vodka", "rosolio casero", "cerveza"],
@@ -97,7 +97,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Diversidad Cultural y Talento Humano",
-    category: "Beverages",
+    category: "Bebidas",
     description:
       "Ingredientes de todo el mundo: notas ahumadas, cítricas y picantes, equilibrado con grillos secos.",
     ingredients: ["mezcal", "pisco", "fermentado de arroz", "grillos secos"],
@@ -113,7 +113,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Frida Mex",
-    category: "Beverages",
+    category: "Bebidas",
     description:
       "Trago contundente con cítricos y picante con notas amargas de cacao.",
     ingredients: ["tequila", "cítricos", "picante", "cacao"],
@@ -128,7 +128,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Lisa Mona",
-    category: "Beverages",
+    category: "Bebidas",
     description:
       "Sabor dulce y amargo con toque ácido. Arándanos frescos y secos.",
     ingredients: ["gin", "vino tinto Ribera del Duero", "arándanos"],
@@ -139,7 +139,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Apostasía",
-    category: "Beverages",
+    category: "Bebidas",
     description: "Drink fresco y equilibrado con notas dulces de coco.",
     ingredients: ["ron", "coco"],
     pairingNotes: [
@@ -155,7 +155,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Pathos",
-    category: "Beverages",
+    category: "Bebidas",
     description: "Sabor cítrico y jengibre refrescante.",
     ingredients: ["ron", "cítricos", "jengibre"],
     pairingNotes: [
@@ -171,7 +171,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "No Music No Life",
-    category: "Beverages",
+    category: "Bebidas",
     description:
       "Mezcla contundente con notas cítricas y amargas de almendras y naranja amarga.",
     ingredients: ["ron blanco", "ron oscuro", "almendras amargas", "naranja amarga"],
@@ -188,7 +188,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Perro Campero",
-    category: "Beverages",
+    category: "Bebidas",
     description: "Sabor herbáceo y cítrico con notas de aceitunas.",
     ingredients: ["gin", "licor de caléndula", "flor de alfalfa", "manzanilla"],
     pairingNotes: [
@@ -203,7 +203,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Grant Wood",
-    category: "Beverages",
+    category: "Bebidas",
     description: "Whisky infusionado con pimienta negra. Sabor dulce-amargo.",
     ingredients: ["whisky", "pimienta negra", "amargos"],
     pairingNotes: [
@@ -221,7 +221,7 @@ const seedItems: SeedItem[] = [
   // ── Beverages (non-alcoholic) ────────────────────────────────────────
   {
     name: "Analgésica",
-    category: "Beverages",
+    category: "Bebidas",
     description: "Drink dulce y refrescante pensado para conductores.",
     ingredients: ["zumos", "frutas", "soda"],
     pairingNotes: [
@@ -236,7 +236,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Cítrica",
-    category: "Beverages",
+    category: "Bebidas",
     description: "Mezcla cítrica y amarga sin alcohol.",
     ingredients: ["cítricos", "amargos", "soda"],
     pairingNotes: [
@@ -250,7 +250,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Rosita",
-    category: "Beverages",
+    category: "Bebidas",
     description: "Equilibrio de sabores entre dulce, cítrico y amargo.",
     ingredients: ["frutas", "cítricos", "amargos"],
     pairingNotes: [
@@ -265,7 +265,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Gardenia",
-    category: "Beverages",
+    category: "Bebidas",
     description: "Bebida dulcemente ácida, de sabor curioso, sin alcohol.",
     ingredients: ["frutas", "ácidos", "flores"],
     pairingNotes: [
@@ -282,7 +282,7 @@ const seedItems: SeedItem[] = [
   // ── Appetizers ───────────────────────────────────────────────────────
   {
     name: "Patatas gratinadas con camembert",
-    category: "Appetizers",
+    category: "Entrantes",
     description: "Plato cremoso, salado-dulce y reconfortante.",
     ingredients: [
       "patata cocida",
@@ -300,7 +300,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Embutidos ibéricos con queso",
-    category: "Appetizers",
+    category: "Entrantes",
     description: "Tabla clásica ibérica.",
     ingredients: ["lomo", "salchichón", "chorizo", "queso"],
     pairingNotes: ["Gin-tonic cítrico", "Cócteles con amargo suave"],
@@ -309,7 +309,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Croquetas sin gluten",
-    category: "Appetizers",
+    category: "Entrantes",
     description:
       "Croquetas elaboradas sin gluten, con interior cremoso y exterior crujiente. Opciones según disponibilidad.",
     ingredients: [
@@ -324,7 +324,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Provolone",
-    category: "Appetizers",
+    category: "Entrantes",
     description: "Queso provolone fundido. Sabor intenso y textura cremosa.",
     ingredients: ["queso provolone"],
     pairingNotes: ["Cócteles amargos", "Cócteles con jengibre"],
@@ -333,7 +333,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Cecina",
-    category: "Appetizers",
+    category: "Entrantes",
     description: "Cecina curada en finas lonchas. Sabor intenso y ligeramente ahumado.",
     ingredients: ["cecina curada"],
     pairingNotes: ["Whisky ahumado", "Ron equilibrado"],
@@ -342,7 +342,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Jamón ibérico",
-    category: "Appetizers",
+    category: "Entrantes",
     description: "Jamón ibérico cortado a mano. Sabor profundo y prolongado.",
     ingredients: ["jamón ibérico"],
     pairingNotes: ["Gin-tonic cítrico", "Cócteles herbáceos"],
@@ -351,7 +351,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Setas y trufa",
-    category: "Appetizers",
+    category: "Entrantes",
     description: "Setas salteadas y trufa según temporada. Aromático y sabroso.",
     ingredients: ["setas", "trufa"],
     pairingNotes: ["Cócteles con amargo suave", "Ron con cítrico"],
@@ -360,7 +360,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Gyozas de pollo y verduras",
-    category: "Appetizers",
+    category: "Entrantes",
     description: "Bocado jugoso con toques umami y picantes.",
     ingredients: ["gyozas de pollo", "verduras", "salsa yakiniku", "sriracha"],
     pairingNotes: ["Cócteles cítricos", "Cócteles con jengibre"],
@@ -368,7 +368,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Gyozas de pato",
-    category: "Appetizers",
+    category: "Entrantes",
     description: "Dulce-salado con toque picante.",
     ingredients: ["gyozas de pato", "salsa hoisin", "sriracha"],
     pairingNotes: ["Ron cítrico", "Cócteles con amargo"],
@@ -376,7 +376,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Fingers de pollo",
-    category: "Appetizers",
+    category: "Entrantes",
     description:
       "Pechuga de pollo con especias, maicena y harina de garbanzo. Salsa yakiniku aparte.",
     ingredients: [
@@ -398,7 +398,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Gildas de anchoa",
-    category: "Appetizers",
+    category: "Entrantes",
     description: "Bocado salino y ácido.",
     ingredients: ["anchoa", "aceituna verde", "cebolleta", "piparra"],
     pairingNotes: ["Gin-tonic cítrico", "Cócteles herbáceos"],
@@ -407,7 +407,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Setas en falsa tempura con salsa gorgonzola",
-    category: "Appetizers",
+    category: "Entrantes",
     description: "Setas de cardo en falsa tempura con salsa gorgonzola cremosa.",
     ingredients: [
       "setas de cardo",
@@ -423,7 +423,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Bravas con salsa casera",
-    category: "Appetizers",
+    category: "Entrantes",
     description: "Patatas con salsa brava casera. Picante amable.",
     ingredients: [
       "patatas",
@@ -439,7 +439,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Bolas de morcilla crujiente con demiglace y confitura de piquillo",
-    category: "Appetizers",
+    category: "Entrantes",
     description:
       "Morcilla de cebolla crujiente con demiglace de carrillera y confitura de piquillo.",
     ingredients: [
@@ -458,7 +458,7 @@ const seedItems: SeedItem[] = [
   // ── Tortillas (appetizers) ───────────────────────────────────────────
   {
     name: "Tortilla tradicional",
-    category: "Appetizers",
+    category: "Entrantes",
     description: "Clásica y jugosa.",
     ingredients: ["huevos", "patata", "cebolla (opcional)", "sal"],
     pairingNotes: ["Gin-tonic cítrico", "Cócteles herbáceos"],
@@ -467,7 +467,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Tortilla trufada",
-    category: "Appetizers",
+    category: "Entrantes",
     description: "Tortilla con tartufato y cebolla caramelizada.",
     ingredients: [
       "huevos",
@@ -485,7 +485,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Tortilla cabrita",
-    category: "Appetizers",
+    category: "Entrantes",
     description: "Tortilla con cebolla caramelizada y queso de cabra.",
     ingredients: ["huevos", "patata", "cebolla caramelizada", "queso de cabra"],
     pairingNotes: ["Cócteles cítricos", "Ron equilibrado"],
@@ -494,7 +494,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Tortilla carrillada",
-    category: "Appetizers",
+    category: "Entrantes",
     description: "Tortilla con carrillada guisada con verduras y especias.",
     ingredients: [
       "huevos",
@@ -509,7 +509,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Tortilla ahumada",
-    category: "Appetizers",
+    category: "Entrantes",
     description: "Tortilla con pimiento rojo asado y sardina ahumada.",
     ingredients: ["huevos", "patata", "pimiento rojo asado", "sardina ahumada"],
     pairingNotes: ["Cócteles cítricos", "Cócteles herbáceos"],
@@ -517,7 +517,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Tortilla de Burgos",
-    category: "Appetizers",
+    category: "Entrantes",
     description: "Tortilla con morcilla de cebolla y confitura de piquillo.",
     ingredients: [
       "huevos",
@@ -530,7 +530,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Tortilla gorgonzola",
-    category: "Appetizers",
+    category: "Entrantes",
     description: "Tortilla con salsa gorgonzola y setas confitadas.",
     ingredients: ["huevos", "patata", "nata", "gorgonzola", "setas confitadas"],
     pairingNotes: ["Cócteles cítricos", "Cócteles con jengibre"],
@@ -539,7 +539,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Tortilla 3 quesos",
-    category: "Appetizers",
+    category: "Entrantes",
     description:
       "Tortilla con emmental, mozzarella y queso curado. Cremosa e intensa.",
     ingredients: ["huevos", "patata", "emmental", "mozzarella", "queso curado"],
@@ -549,7 +549,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Tortilla nonna",
-    category: "Appetizers",
+    category: "Entrantes",
     description: "Tortilla con guanciale y pesto casero.",
     ingredients: [
       "huevos",
@@ -567,7 +567,7 @@ const seedItems: SeedItem[] = [
   // ── Main Dishes ──────────────────────────────────────────────────────
   {
     name: "Ensalada de tomate con ventresca y tapenade",
-    category: "Main Dishes",
+    category: "Platos principales",
     description: "Fresca y salina.",
     ingredients: [
       "tomate",
@@ -585,7 +585,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Lomo bajo con mantequilla de tomillo y ajo",
-    category: "Main Dishes",
+    category: "Platos principales",
     description:
       "Lomo bajo de ternera con mantequilla infusionada y patatas. Sabor intenso y graso.",
     ingredients: [
@@ -603,7 +603,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Tosta de salmón, aguacate y queso crema con lima",
-    category: "Main Dishes",
+    category: "Platos principales",
     description:
       "Pan con salmón curado, crema de aguacate, queso crema y ralladura de lima.",
     ingredients: [
@@ -620,7 +620,7 @@ const seedItems: SeedItem[] = [
   // ── Desserts ─────────────────────────────────────────────────────────
   {
     name: "Tarta de queso",
-    category: "Desserts",
+    category: "Postres",
     description: "Cremosa y equilibrada.",
     ingredients: ["queso", "crema", "huevo", "azúcar", "nata", "maicena"],
     pairingNotes: ["Apostasía", "Bebidas cítricas"],
@@ -628,7 +628,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Brownie con helado de vainilla",
-    category: "Desserts",
+    category: "Postres",
     description: "Intenso y goloso.",
     ingredients: [
       "chocolate 72%",
@@ -645,7 +645,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Lotus",
-    category: "Desserts",
+    category: "Postres",
     description: "Dulce, cremoso y especiado.",
     ingredients: ["turrón de chocolate", "azúcar glas", "nata", "galleta Lotus"],
     pairingNotes: ["Cócteles cítricos", "Bebidas dulces y frescas"],
@@ -653,7 +653,7 @@ const seedItems: SeedItem[] = [
   },
   {
     name: "Helados (varios)",
-    category: "Desserts",
+    category: "Postres",
     description: "Selección de helados según temporada. Pregunta por sabores.",
     ingredients: ["leche", "azúcar", "sabores variados"],
     pairingNotes: ["Bebidas cítricas", "Cócteles ligeros"],
@@ -667,7 +667,7 @@ export const seedRestaurantAndMenu = internalMutation({
     const allergens = await ctx.db.query("allergens").collect();
     if (allergens.length === 0) {
       throw new Error(
-        "Run internal.sampleData.allergensSeed.seedAllergens first to seed the 14 EU allergens.",
+        "Ejecuta primero internal.sampleData.allergensSeed.seedAllergens para sembrar los 14 alérgenos de la UE.",
       );
     }
     const slugToId = new Map(

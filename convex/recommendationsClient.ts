@@ -20,33 +20,43 @@ export const getLatestForRestaurant = query({
 
     if (!rec) return null;
 
-    // Reconstruct grouped pairings from flat items.
-    // Items from the same pairing share pairingName + reason + matchPercentage.
+    // Reconstruct grouped pairings from flat items. Items from the same pairing
+    // share a `role` (safe / adventurous / wildcard); older rows without a role
+    // fall back to grouping by pairingName.
+    const ROLE_ORDER = ["safe", "adventurous", "wildcard"] as const;
+    type Role = (typeof ROLE_ORDER)[number];
     const pairingMap = new Map<string, {
+      role?: Role;
       name: string;
       matchPercentage: number;
       reason?: string;
-      items: Array<{ menuItemName: string }>;
+      items: Array<{ menuItemName: string; type?: "dish" | "drink" | "dessert" }>;
     }>();
 
     for (const it of rec.items) {
       const itemName = it.menuItemName ?? (await ctx.db.get(it.menuItemId))?.name;
       if (!itemName) continue;
-      const key = it.pairingName ?? `${it.matchPercentage}::${it.reason ?? ''}`;
+      const key = it.role ?? it.pairingName ?? `${it.matchPercentage}::${it.reason ?? ''}`;
       const existing = pairingMap.get(key);
       if (existing) {
-        existing.items.push({ menuItemName: itemName });
+        existing.items.push({ menuItemName: itemName, type: it.type });
       } else {
         pairingMap.set(key, {
-          name: it.pairingName ?? `Pairing ${pairingMap.size + 1}`,
+          role: it.role,
+          name: it.pairingName ?? `Maridaje ${pairingMap.size + 1}`,
           matchPercentage: it.matchPercentage,
           reason: it.reason,
-          items: [{ menuItemName: itemName }],
+          items: [{ menuItemName: itemName, type: it.type }],
         });
       }
     }
 
-    const pairings = Array.from(pairingMap.values());
+    // Order by role (safe → adventurous → wildcard) when present.
+    const pairings = Array.from(pairingMap.values()).sort((a, b) => {
+      const ai = a.role ? ROLE_ORDER.indexOf(a.role) : 99;
+      const bi = b.role ? ROLE_ORDER.indexOf(b.role) : 99;
+      return ai - bi;
+    });
 
     return {
       _id: rec._id,
@@ -64,7 +74,7 @@ export const deleteRecommendation = mutation({
     const user = await getCurrentUser(ctx);
     if (!user) throw new Error("Sign in required");
 
-    const rec = await ctx.db.get("recommendations", args.recommendationId);
+    const rec = await ctx.db.get(args.recommendationId);
     if (!rec || rec.userId !== user._id) {
       throw new Error("Recommendation not found");
     }

@@ -9,10 +9,13 @@
  */
 
 import type * as admin from "../admin.js";
+import type * as ai_preferencesCreatorSchema from "../ai/preferencesCreatorSchema.js";
+import type * as ai_preferencesStreaming from "../ai/preferencesStreaming.js";
 import type * as allergens from "../allergens.js";
 import type * as authHelpers from "../authHelpers.js";
 import type * as clientProfiles from "../clientProfiles.js";
 import type * as http from "../http.js";
+import type * as lib_patchUtils from "../lib/patchUtils.js";
 import type * as menuItems from "../menuItems.js";
 import type * as recommendations from "../recommendations.js";
 import type * as recommendationsClient from "../recommendationsClient.js";
@@ -32,10 +35,13 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   admin: typeof admin;
+  "ai/preferencesCreatorSchema": typeof ai_preferencesCreatorSchema;
+  "ai/preferencesStreaming": typeof ai_preferencesStreaming;
   allergens: typeof allergens;
   authHelpers: typeof authHelpers;
   clientProfiles: typeof clientProfiles;
   http: typeof http;
+  "lib/patchUtils": typeof lib_patchUtils;
   menuItems: typeof menuItems;
   recommendations: typeof recommendations;
   recommendationsClient: typeof recommendationsClient;
@@ -74,4 +80,6 @@ export declare const internal: FilterApi<
   FunctionReference<any, "internal">
 >;
 
-export declare const components: {};
+export declare const components: {
+  persistentTextStreaming: import("@convex-dev/persistent-text-streaming/_generated/component.js").ComponentApi<"persistentTextStreaming">;
+};

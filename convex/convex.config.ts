@@ -1,3 +1,4 @@
+import persistentTextStreaming from '@convex-dev/persistent-text-streaming/convex.config';
 import { defineApp } from 'convex/server';
 import { v } from 'convex/values';
 
@@ -15,5 +16,7 @@ const app = defineApp({
     OPENROUTER_MODEL: v.string(),
   },
 });
+
+app.use(persistentTextStreaming);
 
 export default app;

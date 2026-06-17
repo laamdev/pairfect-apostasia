@@ -9,6 +9,7 @@ export function PendingInvitationRow({
   invitation,
 }: {
   invitation: { _id: Id<'pendingInvitations'>; email: string; role: string };
+  // role: rol con el que se incorporará al aceptar la invitación.
 }) {
   const cancelInvitation = useMutation(api.restaurantMembers.cancelInvitation);
   const [cancelling, setCancelling] = useState(false);
@@ -17,7 +18,7 @@ export function PendingInvitationRow({
     <li className="flex items-center justify-between border border-dashed border-border rounded-lg p-3 bg-surface">
       <div>
         <span className="text-sm font-medium text-muted-foreground">{invitation.email}</span>
-        <span className="ml-2 text-xs bg-amber-400/10 text-amber-400 px-2 py-0.5 rounded">Pending</span>
+        <span className="ml-2 text-xs bg-ring/10 text-ring px-2 py-0.5 rounded">Pendiente</span>
       </div>
       <button
         type="button"
@@ -26,9 +27,9 @@ export function PendingInvitationRow({
           setCancelling(true);
           await cancelInvitation({ invitationId: invitation._id });
         }}
-        className="text-xs text-red-400 hover:text-red-300 disabled:opacity-50"
+        className="text-xs text-destructive hover:text-destructive/80 disabled:opacity-50"
       >
-        Cancel
+        Cancelar
       </button>
     </li>
   );

@@ -16,13 +16,13 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     <>
       <Authenticated>{children}</Authenticated>
       <Unauthenticated>
-        <PairfectLanding />
+        <ApostasiaLanding />
       </Unauthenticated>
     </>
   );
 }
 
-function PairfectLanding() {
+function ApostasiaLanding() {
   const [imageIndex, setImageIndex] = useState(0);
 
   useEffect(() => {
@@ -36,10 +36,10 @@ function PairfectLanding() {
     <main className="flex-1 flex flex-col md:flex-row min-h-0">
       {/* Left half — form */}
       <div className="flex-1 flex items-center justify-center px-6 py-12 sm:p-12">
-        <div className="flex flex-col gap-8 sm:gap-10 w-full max-w-sm">
+        <div className="flex flex-col items-center text-center gap-8 sm:gap-10 w-full max-w-sm">
           <div className="flex flex-col gap-3">
-            <h1 className="text-3xl sm:text-5xl font-bold tracking-tight">Pairfect</h1>
-            <p className="text-muted-foreground text-sm sm:text-base">Your perfect pairing, at every restaurant</p>
+            <h1 className="text-4xl sm:text-6xl font-bold tracking-tight">La Apostasía</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">Donde las reglas se rompen y los buenos momentos se hacen ley</p>
           </div>
 
           <div className="flex flex-col gap-3 w-full">
@@ -47,13 +47,13 @@ function PairfectLanding() {
               href="/sign-in"
               className="block text-center bg-accent text-background px-5 py-2.5 sm:px-6 sm:py-3 rounded-lg font-medium text-base sm:text-lg hover:bg-accent-hover transition-colors"
             >
-              Sign in
+              Iniciar sesión
             </a>
             <a
               href="/sign-up"
               className="block text-center border border-accent text-accent px-5 py-2.5 sm:px-6 sm:py-3 rounded-lg font-medium text-base sm:text-lg hover:bg-surface transition-colors"
             >
-              Create account
+              Crear cuenta
             </a>
           </div>
         </div>
@@ -72,7 +72,7 @@ function PairfectLanding() {
           >
             <Image
               src={authImages[imageIndex]}
-              alt="Paired dishes and drinks"
+              alt="Platos y bebidas maridados"
               fill
               sizes="50vw"
               className="object-cover"

@@ -35,7 +35,7 @@ export async function requireUser(
   ctx: QueryCtx | MutationCtx,
 ): Promise<Doc<"users">> {
   const user = await getCurrentUser(ctx);
-  if (!user) throw new Error("Sign in required");
+  if (!user) throw new Error("Debes iniciar sesión");
   return user;
 }
 
@@ -58,11 +58,11 @@ export async function requireRestaurantMember(
     .unique();
 
   if (!membership) {
-    throw new Error("You are not a member of this restaurant");
+    throw new Error("No tienes acceso a este restaurante");
   }
 
   if (allowedRoles && !allowedRoles.includes(membership.role)) {
-    throw new Error(`Requires role: ${allowedRoles.join(" or ")}`);
+    throw new Error("No tienes permisos para realizar esta acción");
   }
 
   return { user, membership };

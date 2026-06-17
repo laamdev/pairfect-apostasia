@@ -6,19 +6,20 @@ import { api } from '../../../../convex/_generated/api';
 import type { Id } from '../../../../convex/_generated/dataModel';
 import Link from 'next/link';
 import { PageWrapper } from '@/components/PageWrapper';
-import { Store, UtensilsCrossed, Users, Settings, ArrowLeft } from 'lucide-react';
+import { Store, UtensilsCrossed, Users, Settings } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { PageHeaderSkeleton, CardListSkeleton } from '@/components/skeletons';
+import { useRestaurant } from '@/hooks/useRestaurant';
+import { roleLabel } from '@/lib/roles';
 
 export default function AdminRestaurantPage() {
   const params = useParams();
   const restaurantId = params.id as Id<'restaurants'>;
-  const restaurants = useQuery(api.restaurants.listMyRestaurants);
+  const restaurant = useRestaurant();
+  const user = useQuery(api.users.currentUser);
   const menuItems = useQuery(api.menuItems.listByRestaurant, { restaurantId });
 
-  const restaurant = restaurants?.find((r) => r._id === restaurantId);
-
-  if (restaurants === undefined) {
+  if (restaurant === undefined || user === undefined) {
     return (
       <PageWrapper>
         <PageHeaderSkeleton />
@@ -27,14 +28,10 @@ export default function AdminRestaurantPage() {
     );
   }
 
-  if (!restaurant) {
+  if (restaurant === null) {
     return (
       <PageWrapper>
-        <p>Restaurant not found or you don't have access.</p>
-        <Link href="/admin" className="mt-4 inline-flex items-center gap-1 text-sm text-accent hover:text-accent-hover">
-          <ArrowLeft className="size-3.5" />
-          Back to dashboard
-        </Link>
+        <p className="text-muted-foreground">El restaurante aún no está configurado.</p>
       </PageWrapper>
     );
   }
@@ -54,10 +51,10 @@ export default function AdminRestaurantPage() {
         )}
         <div>
           <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
-            <h1 className="text-2xl sm:text-3xl font-semibold">{restaurant.name}</h1>
-            <Badge variant="accent" className="capitalize">
-              {restaurant.role}
-            </Badge>
+            <h1 className="text-3xl sm:text-4xl font-semibold">{restaurant.name}</h1>
+            {user?.membershipRole && (
+              <Badge variant="accent">{roleLabel(user.membershipRole)}</Badge>
+            )}
           </div>
           {restaurant.description && <p className="text-muted-foreground mt-1">{restaurant.description}</p>}
         </div>
@@ -70,11 +67,11 @@ export default function AdminRestaurantPage() {
         >
           <div className="flex items-center gap-2 mb-1">
             <UtensilsCrossed className="size-5 text-muted-foreground group-hover:text-accent transition-colors" />
-            <h2 className="font-medium text-lg">Menu</h2>
+            <h2 className="font-medium text-lg">Carta</h2>
           </div>
           <p className="text-sm text-muted-foreground">
-            {itemCount} {itemCount === 1 ? 'item' : 'items'}
-            {categories.length > 0 && ` in ${categories.length} categories`}
+            {itemCount} {itemCount === 1 ? 'plato' : 'platos'}
+            {categories.length > 0 && ` en ${categories.length} ${categories.length === 1 ? 'categoría' : 'categorías'}`}
           </p>
         </Link>
         <Link
@@ -83,9 +80,9 @@ export default function AdminRestaurantPage() {
         >
           <div className="flex items-center gap-2 mb-1">
             <Users className="size-5 text-muted-foreground group-hover:text-accent transition-colors" />
-            <h2 className="font-medium text-lg">Clients</h2>
+            <h2 className="font-medium text-lg">Comensales</h2>
           </div>
-          <p className="text-sm text-muted-foreground">View clients who created pairings</p>
+          <p className="text-sm text-muted-foreground">Ver los comensales que han creado maridajes</p>
         </Link>
         <Link
           href={`/admin/restaurant/${restaurantId}/settings`}
@@ -93,9 +90,9 @@ export default function AdminRestaurantPage() {
         >
           <div className="flex items-center gap-2 mb-1">
             <Settings className="size-5 text-muted-foreground group-hover:text-accent transition-colors" />
-            <h2 className="font-medium text-lg">Settings</h2>
+            <h2 className="font-medium text-lg">Ajustes</h2>
           </div>
-          <p className="text-sm text-muted-foreground">Restaurant info and team</p>
+          <p className="text-sm text-muted-foreground">Información del restaurante y equipo</p>
         </Link>
       </div>
     </PageWrapper>

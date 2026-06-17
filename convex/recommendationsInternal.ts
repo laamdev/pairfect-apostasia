@@ -1,11 +1,23 @@
 import { v } from "convex/values";
-import { internalMutation } from "./_generated/server";
-import {
-  alcoholToleranceValidator,
-  dietPreferenceValidator,
-  spiceLevelValidator,
-  tasteProfileValidator,
-} from "./validators";
+import { internalMutation, internalQuery } from "./_generated/server";
+import { pairingRoleValidator, preferenceSnapshotValidator } from "./validators";
+
+/** Raw recommendation (with item types) for a user at a restaurant. Used by the
+ *  generate action to regenerate a single slot of an existing pairing. */
+export const getRawForUserRestaurant = internalQuery({
+  args: {
+    userId: v.id("users"),
+    restaurantId: v.id("restaurants"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("recommendations")
+      .withIndex("by_userId_and_restaurantId", (q) =>
+        q.eq("userId", args.userId).eq("restaurantId", args.restaurantId),
+      )
+      .unique();
+  },
+});
 
 export const insertRecommendation = internalMutation({
   args: {
@@ -18,18 +30,13 @@ export const insertRecommendation = internalMutation({
         pairingName: v.optional(v.string()),
         matchPercentage: v.number(),
         reason: v.optional(v.string()),
+        type: v.optional(
+          v.union(v.literal("dish"), v.literal("drink"), v.literal("dessert")),
+        ),
+        role: v.optional(pairingRoleValidator),
       }),
     ),
-    preferenceSnapshot: v.optional(
-      v.object({
-        tasteProfile: v.array(tasteProfileValidator),
-        spiceLevel: spiceLevelValidator,
-        allergenIdsToAvoid: v.array(v.id("allergens")),
-        dietPreference: dietPreferenceValidator,
-        alcoholTolerance: alcoholToleranceValidator,
-        sweetTooth: v.optional(v.boolean()),
-      }),
-    ),
+    preferenceSnapshot: v.optional(preferenceSnapshotValidator),
   },
   handler: async (ctx, args) => {
     // One recommendation per user per restaurant — replace existing

@@ -4,30 +4,34 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Paleta de marca "La Apostasía" (apostasiabar.com):
+ * fondo negro · verde lima (acento de marca) · coral (acción) · dorado (foco).
+ */
 :root,
 .dark {
-  --background: #0f0f0f;
-  --foreground: #e8e4dc;
-  --card: #1a1a1c;
-  --card-foreground: #e8e4dc;
-  --popover: #1a1a1c;
-  --popover-foreground: #e8e4dc;
-  --primary: #ffeb9c;
-  --primary-foreground: #0f0f0f;
-  --secondary: #242426;
-  --secondary-foreground: #e8e4dc;
-  --muted: #242426;
-  --muted-foreground: #a8a39a;
-  --accent: #ffeb9c;
-  --accent-foreground: #0f0f0f;
+  --background: #000000;
+  --foreground: #fffef2;
+  --card: #0e0e0e;
+  --card-foreground: #fffef2;
+  --popover: #0e0e0e;
+  --popover-foreground: #fffef2;
+  --primary: #c75d5d;
+  --primary-foreground: #fffef2;
+  --secondary: #161616;
+  --secondary-foreground: #fffef2;
+  --muted: #161616;
+  --muted-foreground: #b5b0a6;
+  --accent: #b9e773;
+  --accent-foreground: #000000;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: #2a2a2c;
-  --input: #2a2a2c;
-  --ring: #ffeb9c;
+  --border: #262626;
+  --input: #262626;
+  --ring: #fef40e;
   --radius: 0.625rem;
-  --surface: #1a1a1c;
-  --surface-hover: #242426;
-  --accent-hover: #fff1b8;
+  --surface: #0e0e0e;
+  --surface-hover: #1a1a1a;
+  --accent-hover: #c9ee8c;
 }
 
 @theme inline {
@@ -78,5 +82,7 @@
   h5,
   h6 {
     font-family: var(--font-heading);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
   }
 }

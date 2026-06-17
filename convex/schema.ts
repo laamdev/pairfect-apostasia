@@ -3,6 +3,9 @@ import { v } from "convex/values";
 import {
   alcoholToleranceValidator,
   dietPreferenceValidator,
+  pairingRoleValidator,
+  preferenceFields,
+  preferenceSnapshotValidator,
   spiceLevelValidator,
   tasteProfileValidator,
 } from "./validators";
@@ -73,27 +76,37 @@ export default defineSchema({
 
   clientProfiles: defineTable({
     userId: v.id("users"),
-    tasteProfile: v.array(tasteProfileValidator),
-    spiceLevel: spiceLevelValidator,
-    allergenIdsToAvoid: v.array(v.id("allergens")),
-    dietPreference: dietPreferenceValidator,
-    alcoholTolerance: alcoholToleranceValidator,
-    sweetTooth: v.optional(v.boolean()),
+    ...preferenceFields,
     displayName: v.optional(v.string()),
   }).index("by_userId", ["userId"]),
 
   restaurantClientProfiles: defineTable({
     userId: v.id("users"),
     restaurantId: v.id("restaurants"),
-    tasteProfile: v.array(tasteProfileValidator),
-    spiceLevel: spiceLevelValidator,
-    allergenIdsToAvoid: v.array(v.id("allergens")),
-    dietPreference: dietPreferenceValidator,
-    alcoholTolerance: alcoholToleranceValidator,
-    sweetTooth: v.optional(v.boolean()),
+    ...preferenceFields,
+  }).index("by_restaurantId_and_userId", ["restaurantId", "userId"]),
+
+  /** A conversational session where the diner builds/edits their preferences
+   *  with the assistant. `data` is the partial preferences JSON, grown via
+   *  JSON Patch as the conversation progresses. */
+  preferenceChatSessions: defineTable({
+    userId: v.id("users"),
+    restaurantId: v.optional(v.id("restaurants")),
+    scope: v.union(v.literal("global"), v.literal("restaurant")),
+    data: v.string(),
+    status: v.union(v.literal("draft"), v.literal("completed")),
+    lastAiTurnStartedAt: v.optional(v.number()),
+  }).index("by_userId", ["userId"]),
+
+  preferenceChatMessages: defineTable({
+    sessionId: v.id("preferenceChatSessions"),
+    role: v.union(v.literal("user"), v.literal("assistant")),
+    content: v.string(),
+    isStreaming: v.optional(v.boolean()),
+    streamId: v.optional(v.string()),
   })
-    .index("by_userId", ["userId"])
-    .index("by_restaurantId_and_userId", ["restaurantId", "userId"]),
+    .index("by_sessionId", ["sessionId"])
+    .index("by_streamId", ["streamId"]),
 
   pendingInvitations: defineTable({
     restaurantId: v.id("restaurants"),
@@ -102,7 +115,8 @@ export default defineSchema({
     invitedBy: v.id("users"),
   })
     .index("by_email", ["email"])
-    .index("by_restaurantId", ["restaurantId"]),
+    .index("by_restaurantId", ["restaurantId"])
+    .index("by_email_and_restaurantId", ["email", "restaurantId"]),
 
   recommendations: defineTable({
     userId: v.id("users"),
@@ -114,19 +128,17 @@ export default defineSchema({
         pairingName: v.optional(v.string()),
         matchPercentage: v.number(),
         reason: v.optional(v.string()),
+        // Which slot of the pairing this item fills. Persisted so we can
+        // regenerate a single pairing/slot independently.
+        type: v.optional(
+          v.union(v.literal("dish"), v.literal("drink"), v.literal("dessert")),
+        ),
+        // Which of the three personality pairings this item belongs to.
+        role: v.optional(pairingRoleValidator),
       }),
     ),
     // Preferences snapshot can be stored for historical context if desired.
-    preferenceSnapshot: v.optional(
-      v.object({
-        tasteProfile: v.array(tasteProfileValidator),
-        spiceLevel: spiceLevelValidator,
-        allergenIdsToAvoid: v.array(v.id("allergens")),
-        dietPreference: dietPreferenceValidator,
-        alcoholTolerance: alcoholToleranceValidator,
-        sweetTooth: v.optional(v.boolean()),
-      }),
-    ),
+    preferenceSnapshot: v.optional(preferenceSnapshotValidator),
   })
     .index("by_userId", ["userId"])
     .index("by_userId_and_restaurantId", ["userId", "restaurantId"])

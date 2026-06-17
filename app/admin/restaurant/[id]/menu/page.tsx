@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
+import { CategoryAccordion } from '@/components/menu/CategoryAccordion';
 import { PageWrapper } from '@/components/PageWrapper';
 import { CardListSkeleton } from '@/components/skeletons';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Eye, EyeOff, UtensilsCrossed, ArrowLeft } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { DietAllergenIcons } from '@/components/menu/DietAllergenIcons';
+import { useRestaurant } from '@/hooks/useRestaurant';
 
 const TASTE_OPTIONS = ['sweet', 'sour', 'salty', 'bitter', 'umami'] as const;
 const SPICE_OPTIONS = ['none', 'low', 'mid', 'high'] as const;
@@ -32,47 +33,51 @@ type Diet = (typeof DIET_OPTIONS)[number];
 type Alcohol = (typeof ALCOHOL_OPTIONS)[number];
 
 const TASTE_LABELS: Record<Taste, string> = {
-  sweet: 'Sweet',
-  sour: 'Sour',
-  salty: 'Salty',
-  bitter: 'Bitter',
+  sweet: 'Dulce',
+  sour: 'Ácido',
+  salty: 'Salado',
+  bitter: 'Amargo',
   umami: 'Umami',
 };
 const DIET_LABELS: Record<Diet, string> = {
-  vegan: 'Vegan',
-  vegetarian: 'Vegetarian',
-  pescatarian: 'Pescatarian',
-  poultry: 'Poultry',
-  meaty: 'Meaty',
-  celiac: 'Celiac',
-  none: 'No restriction',
+  vegan: 'Vegano',
+  vegetarian: 'Vegetariano',
+  pescatarian: 'Pescetariano',
+  poultry: 'Ave',
+  meaty: 'Carne',
+  celiac: 'Celíaco',
+  none: 'Sin restricción',
 };
-const SPICE_LABELS: Record<Spice, string> = { none: 'None', low: 'Low', mid: 'Medium', high: 'High' };
+const SPICE_LABELS: Record<Spice, string> = { none: 'Ninguno', low: 'Bajo', mid: 'Medio', high: 'Alto' };
+const ALCOHOL_LABELS: Record<Alcohol, string> = { none: 'Ninguno', low: 'Bajo', mid: 'Medio', high: 'Alto' };
 
 export default function MenuEditorPage() {
   const params = useParams();
   const restaurantId = params.id as Id<'restaurants'>;
   const menuItems = useQuery(api.menuItems.listByRestaurant, { restaurantId });
   const allergens = useQuery(api.allergens.listAllergens);
-  const restaurants = useQuery(api.restaurants.listMyRestaurants);
+  const restaurant = useRestaurant();
+  const user = useQuery(api.users.currentUser);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<Id<'menuItems'> | null>(null);
-  const restaurant = restaurants?.find((r) => r._id === restaurantId);
 
-  if (menuItems === undefined || allergens === undefined)
+  if (menuItems === undefined || allergens === undefined || user === undefined)
     return (
       <PageWrapper>
         <CardListSkeleton count={5} />
       </PageWrapper>
     );
 
+  // Solo los administradores del restaurante (owner) pueden editar la carta.
+  const canManage = user?.membershipRole === 'owner';
+
   const byCategory = menuItems.reduce<Record<string, typeof menuItems>>((acc, item) => {
-    const cat = item.category || 'Other';
+    const cat = item.category || 'Otros';
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(item);
     return acc;
   }, {});
-  const CATEGORY_ORDER = ['Appetizers', 'Main Dishes', 'Side Dishes', 'Beverages', 'Desserts'];
+  const CATEGORY_ORDER = ['Entrantes', 'Platos principales', 'Guarniciones', 'Bebidas', 'Postres'];
   const categories = Object.keys(byCategory).sort((a, b) => {
     const ia = CATEGORY_ORDER.indexOf(a);
     const ib = CATEGORY_ORDER.indexOf(b);
@@ -87,81 +92,80 @@ export default function MenuEditorPage() {
           className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
         >
           <ArrowLeft className="size-3.5" />
-          Back to {restaurant?.name ?? 'restaurant'}
+          Volver a {restaurant?.name ?? 'el restaurante'}
         </Link>
       </div>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Menu</h1>
-        <Button
-          onClick={() => {
-            setEditingId(null);
-            setShowForm(true);
-          }}
-        >
-          + Add item
-        </Button>
+        <h1 className="text-3xl font-semibold">Carta</h1>
+        {canManage && (
+          <Button
+            onClick={() => {
+              setEditingId(null);
+              setShowForm(true);
+            }}
+          >
+            + Añadir plato
+          </Button>
+        )}
       </div>
 
-      <Dialog
-        open={showForm}
-        onOpenChange={(open) => {
-          if (!open) {
-            setShowForm(false);
-            setEditingId(null);
-          }
-        }}
-      >
-        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl">{editingId ? 'Edit item' : 'New item'}</DialogTitle>
-          </DialogHeader>
-          <MenuItemForm
-            restaurantId={restaurantId}
-            allergens={allergens}
-            editingId={editingId}
-            existingItems={menuItems}
-            onDone={() => {
+      {canManage && (
+        <Dialog
+          open={showForm}
+          onOpenChange={(open) => {
+            if (!open) {
               setShowForm(false);
               setEditingId(null);
-            }}
-          />
-        </DialogContent>
-      </Dialog>
+            }
+          }}
+        >
+          <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-xl">{editingId ? 'Editar plato' : 'Nuevo plato'}</DialogTitle>
+            </DialogHeader>
+            <MenuItemForm
+              restaurantId={restaurantId}
+              allergens={allergens}
+              editingId={editingId}
+              existingItems={menuItems}
+              onDone={() => {
+                setShowForm(false);
+                setEditingId(null);
+              }}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
 
       {menuItems.length === 0 && !showForm && (
         <div className="text-center py-12 border border-dashed border-border rounded-lg">
-          <p className="text-muted-foreground mb-4">Your menu is empty. Add your first item.</p>
+          <p className="text-muted-foreground mb-4">
+            {canManage ? 'Tu carta está vacía. Añade tu primer plato.' : 'La carta está vacía.'}
+          </p>
         </div>
       )}
 
       {categories.length > 0 && (
-        <Accordion defaultValue={categories.length > 0 ? [categories[0]] : []}>
-          {categories.map((cat) => (
-            <AccordionItem key={cat} value={cat}>
-              <AccordionTrigger className="text-lg font-medium text-foreground flex items-baseline">
-                <span>{cat}</span>
-                <span className="ml-4 text-xs font-normal text-muted-foreground font-sans">
-                  {byCategory[cat].length} {byCategory[cat].length === 1 ? 'item' : 'items'}
-                </span>
-              </AccordionTrigger>
-              <AccordionContent>
-                <ul className="flex flex-col gap-2">
-                  {byCategory[cat].map((item) => (
-                    <MenuItemRow
-                      key={item._id}
-                      item={item}
-                      allergens={allergens}
-                      onEdit={() => {
-                        setEditingId(item._id);
-                        setShowForm(true);
-                      }}
-                    />
-                  ))}
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+        <CategoryAccordion
+          categories={categories}
+          countFor={(cat) => byCategory[cat].length}
+          renderItems={(cat) => (
+            <ul className="flex flex-col gap-2">
+              {byCategory[cat].map((item) => (
+                <MenuItemRow
+                  key={item._id}
+                  item={item}
+                  allergens={allergens}
+                  canManage={canManage}
+                  onEdit={() => {
+                    setEditingId(item._id);
+                    setShowForm(true);
+                  }}
+                />
+              ))}
+            </ul>
+          )}
+        />
       )}
     </PageWrapper>
   );
@@ -170,6 +174,7 @@ export default function MenuEditorPage() {
 function MenuItemRow({
   item,
   allergens,
+  canManage,
   onEdit,
 }: {
   item: {
@@ -186,6 +191,7 @@ function MenuItemRow({
     imageUrl?: string | null;
   };
   allergens: Array<{ _id: Id<'allergens'>; name: string; slug: string }>;
+  canManage: boolean;
   onEdit: () => void;
 }) {
   const deleteItem = useMutation(api.menuItems.deleteMenuItem);
@@ -222,65 +228,67 @@ function MenuItemRow({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-base leading-none">{item.name}</span>
-            {item.isSpecial && <Badge variant="accent">Special</Badge>}
+            {item.isSpecial && <Badge variant="accent">Especial</Badge>}
             {!isAvailable && (
               <Badge variant="muted">
-                Unavailable
+                No disponible
               </Badge>
             )}
           </div>
           <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{item.description}</p>
           {item.price != null && <p className="text-xs text-muted-foreground mt-1">{item.price.toFixed(2)} &euro;</p>}
         </div>
-        <div className="flex gap-1 shrink-0 items-center">
-          <Tooltip>
-            <TooltipTrigger
-              className="p-1.5 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
-              onClick={() => updateItem({ menuItemId: item._id, isAvailable: !isAvailable })}
+        {canManage && (
+          <div className="flex gap-1 shrink-0 items-center">
+            <Tooltip>
+              <TooltipTrigger
+                className="p-1.5 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                onClick={() => updateItem({ menuItemId: item._id, isAvailable: !isAvailable })}
+              >
+                {isAvailable ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+              </TooltipTrigger>
+              <TooltipContent>{isAvailable ? 'Marcar como no disponible' : 'Marcar como disponible'}</TooltipContent>
+            </Tooltip>
+            <Button variant="outline" size="xs" onClick={onEdit}>
+              Editar
+            </Button>
+            <Button
+              variant="destructive"
+              size="xs"
+              disabled={deleting}
+              onClick={() => setShowDeleteConfirm(true)}
             >
-              {isAvailable ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
-            </TooltipTrigger>
-            <TooltipContent>{isAvailable ? 'Mark unavailable' : 'Mark available'}</TooltipContent>
-          </Tooltip>
-          <Button variant="outline" size="xs" onClick={onEdit}>
-            Edit
-          </Button>
-          <Button
-            variant="destructive"
-            size="xs"
-            disabled={deleting}
-            onClick={() => setShowDeleteConfirm(true)}
-          >
-            {deleting ? '...' : 'Delete'}
-          </Button>
-          <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-            <DialogContent className="sm:max-w-sm">
-              <DialogHeader>
-                <DialogTitle>Delete item</DialogTitle>
-              </DialogHeader>
-              <p className="text-sm text-muted-foreground">
-                Are you sure you want to delete <strong>{item.name}</strong>? This action cannot be undone.
-              </p>
-              <div className="flex justify-end gap-2 mt-2">
-                <Button variant="outline" size="sm" onClick={() => setShowDeleteConfirm(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  disabled={deleting}
-                  onClick={async () => {
-                    setDeleting(true);
-                    await deleteItem({ menuItemId: item._id });
-                    setShowDeleteConfirm(false);
-                  }}
-                >
-                  {deleting ? 'Deleting...' : 'Delete'}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
+              {deleting ? '...' : 'Eliminar'}
+            </Button>
+            <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+              <DialogContent className="sm:max-w-sm">
+                <DialogHeader>
+                  <DialogTitle>Eliminar plato</DialogTitle>
+                </DialogHeader>
+                <p className="text-sm text-muted-foreground">
+                  ¿Seguro que quieres eliminar <strong>{item.name}</strong>? Esta acción no se puede deshacer.
+                </p>
+                <div className="flex justify-end gap-2 mt-2">
+                  <Button variant="outline" size="sm" onClick={() => setShowDeleteConfirm(false)}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={deleting}
+                    onClick={async () => {
+                      setDeleting(true);
+                      await deleteItem({ menuItemId: item._id });
+                      setShowDeleteConfirm(false);
+                    }}
+                  >
+                    {deleting ? 'Eliminando…' : 'Eliminar'}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
       </div>
       <div className="mt-3">
         <DietAllergenIcons
@@ -393,7 +401,7 @@ function MenuItemForm({
       else await createItem({ restaurantId, ...common });
       onDone();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save');
+      setError(err instanceof Error ? err.message : 'No se pudo guardar');
     } finally {
       setSaving(false);
     }
@@ -402,17 +410,17 @@ function MenuItemForm({
   const existingCategories = [...new Set(existingItems.map((i) => i.category))].sort();
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="item-name" className="mb-1 text-xs text-muted-foreground">
-            Name *
+          <Label htmlFor="item-name" className="mb-2 text-xs text-muted-foreground">
+            Nombre *
           </Label>
           <Input id="item-name" type="text" value={name} onChange={(e) => setName(e.target.value)} required />
         </div>
         <div>
-          <Label htmlFor="item-category" className="mb-1 text-xs text-muted-foreground">
-            Category *
+          <Label htmlFor="item-category" className="mb-2 text-xs text-muted-foreground">
+            Categoría *
           </Label>
           <Input
             id="item-category"
@@ -430,8 +438,8 @@ function MenuItemForm({
         </div>
       </div>
       <div>
-        <Label htmlFor="item-description" className="mb-1 text-xs text-muted-foreground">
-          Description *
+        <Label htmlFor="item-description" className="mb-2 text-xs text-muted-foreground">
+          Descripción *
         </Label>
         <Textarea
           id="item-description"
@@ -442,11 +450,11 @@ function MenuItemForm({
         />
       </div>
       <div>
-        <Label className="mb-1 text-xs text-muted-foreground">Image</Label>
+        <Label className="mb-2 text-xs text-muted-foreground">Imagen</Label>
         <div className="flex items-center gap-3">
-          {imagePreview && <img src={imagePreview} alt="Preview" className="size-16 rounded-md object-cover" />}
+          {imagePreview && <img src={imagePreview} alt="Vista previa" className="size-16 rounded-md object-cover" />}
           <label className="cursor-pointer rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-            {imagePreview ? 'Change image' : 'Upload image'}
+            {imagePreview ? 'Cambiar imagen' : 'Subir imagen'}
             <input
               type="file"
               accept="image/*"
@@ -469,27 +477,27 @@ function MenuItemForm({
                 setImagePreview(null);
               }}
             >
-              Remove
+              Quitar
             </button>
           )}
         </div>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="item-price" className="mb-1 text-xs text-muted-foreground">
-            Price
+          <Label htmlFor="item-price" className="mb-2 text-xs text-muted-foreground">
+            Precio
           </Label>
           <Input id="item-price" type="number" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} />
         </div>
         <div>
-          <Label htmlFor="item-sort" className="mb-1 text-xs text-muted-foreground">
-            Sort order
+          <Label htmlFor="item-sort" className="mb-2 text-xs text-muted-foreground">
+            Orden
           </Label>
           <Input id="item-sort" type="number" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} />
         </div>
       </div>
       <div>
-        <Label className="mb-1 text-xs text-muted-foreground">Taste profile</Label>
+        <Label className="mb-2 text-xs text-muted-foreground">Perfil de sabor</Label>
         <div className="flex flex-wrap gap-3">
           {TASTE_OPTIONS.map((t) => (
             <Label key={t} className="font-normal text-sm">
@@ -503,8 +511,8 @@ function MenuItemForm({
         </div>
       </div>
       <div>
-        <Label className="mb-1 text-xs text-muted-foreground">Spice level</Label>
-        <Select value={spiceLevel} onValueChange={(val) => setSpiceLevel(val as Spice)}>
+        <Label className="mb-2 text-xs text-muted-foreground">Nivel de picante</Label>
+        <Select items={SPICE_LABELS} value={spiceLevel} onValueChange={(val) => setSpiceLevel(val as Spice)}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -518,7 +526,7 @@ function MenuItemForm({
         </Select>
       </div>
       <div>
-        <Label className="mb-1 text-xs text-muted-foreground">Allergens</Label>
+        <Label className="mb-2 text-xs text-muted-foreground">Alérgenos</Label>
         <div className="flex flex-wrap gap-3">
           {allergens.map((a) => (
             <Label key={a._id} className="font-normal text-sm">
@@ -532,7 +540,7 @@ function MenuItemForm({
         </div>
       </div>
       <div>
-        <Label className="mb-1 text-xs text-muted-foreground">Diet tags</Label>
+        <Label className="mb-2 text-xs text-muted-foreground">Etiquetas de dieta</Label>
         <div className="flex flex-wrap gap-3">
           {DIET_OPTIONS.filter((d) => d !== 'none').map((d) => (
             <Label key={d} className="font-normal text-sm">
@@ -543,7 +551,7 @@ function MenuItemForm({
         </div>
       </div>
       <div>
-        <Label className="mb-1 text-xs text-muted-foreground">Ingredients</Label>
+        <Label className="mb-2 text-xs text-muted-foreground">Ingredientes</Label>
         <div className="flex flex-wrap gap-1.5 mb-2">
           {ingredients.map((ing, i) => (
             <span
@@ -571,11 +579,11 @@ function MenuItemForm({
               setIngredientInput('');
             }
           }}
-          placeholder="Type and press Enter"
+          placeholder="Escribe y pulsa Enter"
         />
       </div>
       <div>
-        <Label className="mb-1 text-xs text-muted-foreground">Pairing notes</Label>
+        <Label className="mb-2 text-xs text-muted-foreground">Notas de maridaje</Label>
         <div className="flex flex-wrap gap-1.5 mb-2">
           {pairingNotes.map((note, i) => (
             <span
@@ -603,31 +611,32 @@ function MenuItemForm({
               setPairingNoteInput('');
             }
           }}
-          placeholder="Type and press Enter"
+          placeholder="Escribe y pulsa Enter"
         />
       </div>
       <div>
-        <Label className="mb-1 text-xs text-muted-foreground">Alcohol level</Label>
-        <Select value={alcoholLevel} onValueChange={(val) => setAlcoholLevel(val as Alcohol)}>
+        <Label className="mb-2 text-xs text-muted-foreground">Nivel de alcohol</Label>
+        <Select items={ALCOHOL_LABELS} value={alcoholLevel} onValueChange={(val) => setAlcoholLevel(val as Alcohol)}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="none">None</SelectItem>
-            <SelectItem value="low">Low</SelectItem>
-            <SelectItem value="mid">Medium</SelectItem>
-            <SelectItem value="high">High</SelectItem>
+            {ALCOHOL_OPTIONS.map((a) => (
+              <SelectItem key={a} value={a}>
+                {ALCOHOL_LABELS[a]}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
       <Label className="font-normal text-sm">
         <Checkbox checked={isSpecial} onCheckedChange={(checked) => setIsSpecial(checked === true)} />
-        Mark as special
+        Marcar como especial
       </Label>
       <Button type="submit" disabled={saving || !name.trim() || !description.trim() || !category.trim()}>
-        {saving ? 'Saving...' : editingId ? 'Save changes' : 'Add item'}
+        {saving ? 'Guardando…' : editingId ? 'Guardar cambios' : 'Añadir plato'}
       </Button>
-      {error && <p className="text-red-400 text-sm">{error}</p>}
+      {error && <p className="text-destructive text-sm">{error}</p>}
     </form>
   );
 }

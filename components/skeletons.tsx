@@ -37,7 +37,7 @@ export const PageHeaderSkeleton = () => (
 );
 
 export const FormSkeleton = () => (
-  <div className="border border-border rounded-lg p-5 bg-surface flex flex-col gap-5">
+  <div className="border border-border rounded-lg p-6 bg-surface flex flex-col gap-6">
     <Skeleton className="h-4 w-24" />
     <Skeleton className="h-9 w-full" />
     <Skeleton className="h-4 w-24" />

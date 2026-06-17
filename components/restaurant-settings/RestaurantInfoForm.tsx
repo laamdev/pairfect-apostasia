@@ -15,7 +15,7 @@ export const RestaurantInfoForm = ({
   restaurant,
 }: {
   restaurantId: Id<'restaurants'>;
-  restaurant: { name: string; description?: string; logoUrl?: string | null };
+  restaurant: { name: string; description?: string | null; logoUrl?: string | null };
 }) => {
   const [name, setName] = useState(restaurant.name);
   const [description, setDescription] = useState(restaurant.description ?? '');
@@ -33,9 +33,9 @@ export const RestaurantInfoForm = ({
     setMessage(null);
     try {
       await updateRestaurant({ restaurantId, name: name.trim(), description: description.trim() || undefined });
-      setMessage('Saved.');
+      setMessage('Guardado.');
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'Failed to save');
+      setMessage(err instanceof Error ? err.message : 'No se pudo guardar');
     } finally {
       setSaving(false);
     }
@@ -56,9 +56,9 @@ export const RestaurantInfoForm = ({
       const { storageId } = await result.json();
       await updateRestaurant({ restaurantId, logoStorageId: storageId });
       setLogoPreview(URL.createObjectURL(file));
-      setMessage('Logo updated.');
+      setMessage('Logo actualizado.');
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'Failed to upload logo');
+      setMessage(err instanceof Error ? err.message : 'No se pudo subir el logo');
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -66,8 +66,8 @@ export const RestaurantInfoForm = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="border border-border rounded-lg p-5 bg-surface flex flex-col gap-5">
-      <h2 className="text-lg font-medium">Info</h2>
+    <form onSubmit={handleSubmit} className="border border-border rounded-lg p-6 bg-surface flex flex-col gap-6">
+      <h2 className="text-lg font-medium">Información</h2>
       <div className="flex items-start gap-6">
         <button
           type="button"
@@ -77,21 +77,21 @@ export const RestaurantInfoForm = ({
         >
           {logoPreview ? (
             <>
-              <Image src={logoPreview} alt="Restaurant logo" fill className="object-cover" sizes="96px" />
+              <Image src={logoPreview} alt="Logo del restaurante" fill className="object-cover" sizes="96px" />
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <span className="text-xs text-white">{uploading ? 'Uploading...' : 'Change'}</span>
+                <span className="text-xs text-white">{uploading ? 'Subiendo…' : 'Cambiar'}</span>
               </div>
             </>
           ) : (
             <span className="text-xs text-muted-foreground text-center px-1">
-              {uploading ? 'Uploading...' : 'Add logo'}
+              {uploading ? 'Subiendo…' : 'Añadir logo'}
             </span>
           )}
         </button>
         <input ref={fileInputRef} type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
-        <div className="flex flex-col gap-3 flex-1">
+        <div className="flex flex-col gap-4 flex-1">
           <div>
-            <Label htmlFor="restaurant-name" className="mb-1">Name</Label>
+            <Label htmlFor="restaurant-name" className="mb-2">Nombre</Label>
             <Input
               id="restaurant-name"
               type="text"
@@ -101,7 +101,7 @@ export const RestaurantInfoForm = ({
             />
           </div>
           <div>
-            <Label htmlFor="restaurant-description" className="mb-1">Description</Label>
+            <Label htmlFor="restaurant-description" className="mb-2">Descripción</Label>
             <Textarea
               id="restaurant-description"
               value={description}
@@ -113,7 +113,7 @@ export const RestaurantInfoForm = ({
       </div>
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={saving || !name.trim()}>
-          {saving ? 'Saving...' : 'Save'}
+          {saving ? 'Guardando…' : 'Guardar'}
         </Button>
         {message && <span className="text-sm text-muted-foreground">{message}</span>}
       </div>

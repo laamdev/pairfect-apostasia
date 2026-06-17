@@ -20,7 +20,7 @@ export const DietAllergenIcons = ({
     dietTags?.includes('vegan') ||
     dietTags?.includes('vegetarian') ||
     dietTags?.includes('celiac') ||
-    (category === 'Beverages' && (!alcoholLevel || alcoholLevel === 'none')) ||
+    (category === 'Bebidas' && (!alcoholLevel || alcoholLevel === 'none')) ||
     allergens.length > 0;
 
   if (!hasIcons) return null;
@@ -32,7 +32,7 @@ export const DietAllergenIcons = ({
           <TooltipTrigger className="cursor-default">
             <Vegan className="size-4 text-muted-foreground" />
           </TooltipTrigger>
-          <TooltipContent>Vegan</TooltipContent>
+          <TooltipContent>Vegano</TooltipContent>
         </Tooltip>
       )}
       {dietTags?.includes('vegetarian') && !dietTags?.includes('vegan') && (
@@ -40,7 +40,7 @@ export const DietAllergenIcons = ({
           <TooltipTrigger className="cursor-default">
             <LeafyGreen className="size-4 text-muted-foreground" />
           </TooltipTrigger>
-          <TooltipContent>Vegetarian</TooltipContent>
+          <TooltipContent>Vegetariano</TooltipContent>
         </Tooltip>
       )}
       {dietTags?.includes('celiac') && (
@@ -48,15 +48,15 @@ export const DietAllergenIcons = ({
           <TooltipTrigger className="cursor-default">
             <WheatOff className="size-4 text-muted-foreground" />
           </TooltipTrigger>
-          <TooltipContent>Gluten free</TooltipContent>
+          <TooltipContent>Sin gluten</TooltipContent>
         </Tooltip>
       )}
-      {category === 'Beverages' && (!alcoholLevel || alcoholLevel === 'none') && (
+      {category === 'Bebidas' && (!alcoholLevel || alcoholLevel === 'none') && (
         <Tooltip>
           <TooltipTrigger className="cursor-default">
             <WineOff className="size-4 text-muted-foreground" />
           </TooltipTrigger>
-          <TooltipContent>Non-alcoholic</TooltipContent>
+          <TooltipContent>Sin alcohol</TooltipContent>
         </Tooltip>
       )}
       {allergens.map((a) => (
