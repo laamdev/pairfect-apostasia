@@ -71,7 +71,7 @@ Generate exactly 3 different pairings. Each pairing is a complete set: one dish 
       process.env.OPENAI_MODEL ??
       process.env.LLM_MODEL ??
       // current default, kept for backwards compatibility
-      'gpt-4o-mini';
+      'google/gemini-3.1-flash-lite';
 
     const systemPrompt = `You are a food and drink pairing expert. Given a user's taste and dietary preferences and a restaurant menu, recommend 3 complete pairings.
 
